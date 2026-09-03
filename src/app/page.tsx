@@ -75,8 +75,8 @@ export default function Dashboard() {
       setMapState(prev => ({ ...prev, isLoading: true, error: null }));
       
       try {
-        // 1. Geocode the target hotel using Nominatim (Free OSM Geocoder)
-        const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(config.hotelName)}&limit=1`;
+        // 1. Geocode the target hotel using internal proxy
+        const geocodeUrl = `/api/geo?q=${encodeURIComponent(config.hotelName)}`;
         const geocodeRes = await axios.get(geocodeUrl);
         
         if (!geocodeRes.data || geocodeRes.data.length === 0) {
@@ -87,17 +87,14 @@ export default function Dashboard() {
         const lon = parseFloat(geocodeRes.data[0].lon);
         const center: [number, number] = [lat, lon];
         
-        // 2. Fetch nearby hotels using Overpass API (radius in meters, we search a wide 10km net to allow slider filtering)
+        // 2. Fetch nearby hotels using internal proxy (radius in meters)
         const searchRadiusMeters = 10000; 
-        const overpassQuery = `
-          [out:json];
-          node["tourism"="hotel"](around:${searchRadiusMeters},${lat},${lon});
-          out body;
-        `;
         
-        const overpassUrl = `https://overpass-api.de/api/interpreter`;
-        const overpassRes = await axios.post(overpassUrl, overpassQuery, {
-          headers: { 'Content-Type': 'text/plain' }
+        const overpassUrl = `/api/hotels`;
+        const overpassRes = await axios.post(overpassUrl, {
+          lat, 
+          lon, 
+          radius: searchRadiusMeters
         });
         
         interface OverpassNode {
