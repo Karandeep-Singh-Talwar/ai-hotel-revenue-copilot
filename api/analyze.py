@@ -4,7 +4,6 @@ import sys
 import os
 import io
 
-# Add project root to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from engine.main import run_analysis_with_context
 
@@ -14,15 +13,12 @@ class handler(BaseHTTPRequestHandler):
         post_data = self.rfile.read(content_length)
         payload = json.loads(post_data)
         
-        # Capture standard output so we can stream it to the frontend logs
         old_stdout = sys.stdout
         sys.stdout = my_stdout = io.StringIO()
         
         try:
-            # Payload expected: { hotelName, competitors, whatsapp, pmsData: { occupancy, revpar } }
-            run_analysis_with_context(payload)
+            result_data = run_analysis_with_context(payload)
             
-            # Restore stdout
             sys.stdout = old_stdout
             output = my_stdout.getvalue()
             
@@ -34,7 +30,8 @@ class handler(BaseHTTPRequestHandler):
             response_data = {
                 "status": "success",
                 "message": "Analysis job executed",
-                "logs": output
+                "logs": output,
+                "result": result_data
             }
             self.wfile.write(json.dumps(response_data).encode('utf-8'))
             
