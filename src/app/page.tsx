@@ -258,6 +258,17 @@ export default function Dashboard() {
                       </div>
                     </div>
 
+                    {/* LOGS TERMINAL */}
+                    <div className="bg-[#0A0A0A] rounded-lg shadow-sm border border-gray-800 overflow-hidden mt-6">
+                      <div className="bg-[#111] px-4 py-2.5 border-b border-gray-800 flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Execution Trace</span>
+                        <span className="w-2 h-2 rounded-full bg-green-500 opacity-50"></span>
+                      </div>
+                      <div className="p-4 h-40 overflow-y-auto font-mono text-[11px] leading-relaxed text-gray-300">
+                        <pre className="whitespace-pre-wrap">{logs}</pre>
+                      </div>
+                    </div>
+
                   </div>
                 ) : (
                   <div className="bg-white rounded-lg border border-gray-200 border-dashed h-64 flex flex-col items-center justify-center text-gray-400">
