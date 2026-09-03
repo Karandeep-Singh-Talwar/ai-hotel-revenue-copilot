@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import axios from "axios";
 import MapWrapper from "../components/MapWrapper";
 
 interface AnalysisResult {
@@ -15,17 +16,12 @@ interface AnalysisResult {
   logicSteps: string[];
 }
 
-// Mock Delhi Hotels
-const DELHI_HOTELS = [
-  { id: "h1", name: "The Oberoi", lat: 28.5985, lng: 77.2388 },
-  { id: "h2", name: "Le Meridien", lat: 28.6189, lng: 77.2185 },
-  { id: "h3", name: "Shangri-La Eros", lat: 28.6214, lng: 77.2183 },
-  { id: "h4", name: "The Claridges", lat: 28.6006, lng: 77.2155 },
-  { id: "h5", name: "The Imperial", lat: 28.6256, lng: 77.2187 },
-  { id: "h6", name: "ITC Maurya", lat: 28.5973, lng: 77.1738 },
-  { id: "h7", name: "Taj Palace", lat: 28.5956, lng: 77.1706 },
-  { id: "h8", name: "The Leela Palace", lat: 28.5796, lng: 77.1894 },
-];
+interface Hotel {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+}
 
 export default function Dashboard() {
   const [config, setConfig] = useState({
@@ -42,9 +38,19 @@ export default function Dashboard() {
   // Map State
   const [showMap, setShowMap] = useState(false);
   const [radiusKm, setRadiusKm] = useState(3.0);
-  const targetLocation: [number, number] = [28.6049, 77.2235]; // fixed for demo
+  
+  const [mapState, setMapState] = useState<{
+    isLoading: boolean;
+    targetLocation: [number, number] | null;
+    nearbyHotels: Hotel[];
+    error: string | null;
+  }>({
+    isLoading: false,
+    targetLocation: null,
+    nearbyHotels: [],
+    error: null
+  });
 
-  // Parse competitors string to array for the map component
   const selectedComps = useMemo(() => {
     return config.competitors.split(",").map(s => s.trim()).filter(Boolean);
   }, [config.competitors]);
@@ -58,6 +64,81 @@ export default function Dashboard() {
     }
     setConfig({ ...config, competitors: newComps.join(", ") });
   };
+
+  // Dynamically load real hotel data when map is toggled
+  useEffect(() => {
+    if (!showMap || !config.hotelName) return;
+
+    let isMounted = true;
+    
+    const fetchGeoData = async () => {
+      setMapState(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      try {
+        // 1. Geocode the target hotel using Nominatim (Free OSM Geocoder)
+        const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(config.hotelName)}&limit=1`;
+        const geocodeRes = await axios.get(geocodeUrl);
+        
+        if (!geocodeRes.data || geocodeRes.data.length === 0) {
+          throw new Error("Could not find location. Try adding the city name.");
+        }
+        
+        const lat = parseFloat(geocodeRes.data[0].lat);
+        const lon = parseFloat(geocodeRes.data[0].lon);
+        const center: [number, number] = [lat, lon];
+        
+        // 2. Fetch nearby hotels using Overpass API (radius in meters, we search a wide 10km net to allow slider filtering)
+        const searchRadiusMeters = 10000; 
+        const overpassQuery = `
+          [out:json];
+          node["tourism"="hotel"](around:${searchRadiusMeters},${lat},${lon});
+          out body;
+        `;
+        
+        const overpassUrl = `https://overpass-api.de/api/interpreter`;
+        const overpassRes = await axios.post(overpassUrl, overpassQuery, {
+          headers: { 'Content-Type': 'text/plain' }
+        });
+        
+        const nodes = overpassRes.data.elements;
+        const hotels: Hotel[] = nodes
+          .filter((n: any) => n.tags && n.tags.name)
+          .map((n: any) => ({
+            id: n.id.toString(),
+            name: n.tags.name,
+            lat: n.lat,
+            lng: n.lon
+          }));
+          
+        if (isMounted) {
+          setMapState({
+            isLoading: false,
+            targetLocation: center,
+            nearbyHotels: hotels,
+            error: null
+          });
+        }
+      } catch (err) {
+        if (isMounted) {
+          setMapState(prev => ({ 
+            ...prev, 
+            isLoading: false, 
+            error: err instanceof Error ? err.message : "Map loading failed" 
+          }));
+        }
+      }
+    };
+    
+    // Add a slight debounce to prevent spamming the free APIs if user types fast
+    const timer = setTimeout(() => {
+      fetchGeoData();
+    }, 1000);
+    
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [showMap, config.hotelName]);
 
   const runAnalysis = async () => {
     setLoading(true);
@@ -182,16 +263,30 @@ export default function Dashboard() {
                           <label className="text-[10px] font-bold text-gray-700 uppercase tracking-wider">Radius Limit: {radiusKm} km</label>
                           <input type="range" min="1" max="10" step="0.5" value={radiusKm} onChange={(e) => setRadiusKm(parseFloat(e.target.value))} className="w-1/2 accent-black h-1 bg-gray-200 rounded appearance-none cursor-pointer"/>
                         </div>
-                        <div className="h-48 w-full relative">
-                          <MapWrapper 
-                            targetLocation={targetLocation}
-                            radiusKm={radiusKm}
-                            nearbyHotels={DELHI_HOTELS}
-                            selectedCompetitors={selectedComps}
-                            onToggleCompetitor={toggleCompetitor}
-                          />
+                        <div className="h-48 w-full relative bg-gray-100 rounded overflow-hidden">
+                          {mapState.isLoading ? (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 z-10 bg-gray-100">
+                              <svg className="animate-spin h-5 w-5 mb-2" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                              <span className="text-[10px] uppercase font-bold tracking-widest">Geocoding Location...</span>
+                            </div>
+                          ) : mapState.error ? (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center text-red-500 z-10 bg-red-50 p-4 text-center">
+                              <svg className="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                              <span className="text-[10px] uppercase font-bold">{mapState.error}</span>
+                            </div>
+                          ) : mapState.targetLocation && (
+                            <MapWrapper 
+                              targetLocation={mapState.targetLocation}
+                              radiusKm={radiusKm}
+                              nearbyHotels={mapState.nearbyHotels}
+                              selectedCompetitors={selectedComps}
+                              onToggleCompetitor={toggleCompetitor}
+                            />
+                          )}
                         </div>
-                        <p className="text-[10px] text-gray-500 mt-2 text-center">Click markers to add/remove competitors within the radius.</p>
+                        <p className="text-[10px] text-gray-500 mt-2 text-center">
+                          {mapState.nearbyHotels.length > 0 ? `Found ${mapState.nearbyHotels.length} real properties nearby.` : "Click markers to add/remove competitors within the radius."}
+                        </p>
                       </div>
                     )}
 
