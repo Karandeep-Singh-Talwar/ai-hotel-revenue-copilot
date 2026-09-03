@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import MapWrapper from "../components/MapWrapper";
 
 interface AnalysisResult {
   currentMedian: number;
@@ -14,10 +15,22 @@ interface AnalysisResult {
   logicSteps: string[];
 }
 
+// Mock Delhi Hotels
+const DELHI_HOTELS = [
+  { id: "h1", name: "The Oberoi", lat: 28.5985, lng: 77.2388 },
+  { id: "h2", name: "Le Meridien", lat: 28.6189, lng: 77.2185 },
+  { id: "h3", name: "Shangri-La Eros", lat: 28.6214, lng: 77.2183 },
+  { id: "h4", name: "The Claridges", lat: 28.6006, lng: 77.2155 },
+  { id: "h5", name: "The Imperial", lat: 28.6256, lng: 77.2187 },
+  { id: "h6", name: "ITC Maurya", lat: 28.5973, lng: 77.1738 },
+  { id: "h7", name: "Taj Palace", lat: 28.5956, lng: 77.1706 },
+  { id: "h8", name: "The Leela Palace", lat: 28.5796, lng: 77.1894 },
+];
+
 export default function Dashboard() {
   const [config, setConfig] = useState({
     hotelName: "Taj Mahal New Delhi",
-    competitors: "Oberoi, Leela Palace, ITC Maurya",
+    competitors: "The Oberoi, The Claridges",
     whatsapp: "+919876543210",
   });
   
@@ -26,10 +39,30 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
 
+  // Map State
+  const [showMap, setShowMap] = useState(false);
+  const [radiusKm, setRadiusKm] = useState(3.0);
+  const targetLocation: [number, number] = [28.6049, 77.2235]; // fixed for demo
+
+  // Parse competitors string to array for the map component
+  const selectedComps = useMemo(() => {
+    return config.competitors.split(",").map(s => s.trim()).filter(Boolean);
+  }, [config.competitors]);
+
+  const toggleCompetitor = (name: string) => {
+    let newComps;
+    if (selectedComps.includes(name)) {
+      newComps = selectedComps.filter(c => c !== name);
+    } else {
+      newComps = [...selectedComps, name];
+    }
+    setConfig({ ...config, competitors: newComps.join(", ") });
+  };
+
   const runAnalysis = async () => {
     setLoading(true);
     setResult(null);
-    setLogs("[SYS] Initializing Revenue Intelligence Core...\n[SYS] Bypassing OTA Bot Managers...\n[SYS] Aggregating Competitor Set Pricing...\n[SYS] Ingesting PMS Context...\n");
+    setLogs("[SYS] Initializing Revenue Intelligence Core...\n[SYS] Geospatial Analysis active...\n[SYS] Bypassing OTA Bot Managers...\n[SYS] Aggregating Competitor Set Pricing...\n[SYS] Ingesting PMS Context...\n");
     
     try {
       const res = await fetch("/api/analyze", {
@@ -37,7 +70,7 @@ export default function Dashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           hotelName: config.hotelName,
-          competitors: config.competitors.split(",").map((s) => s.trim()),
+          competitors: selectedComps,
           whatsapp: config.whatsapp,
           pmsData: pmsData,
         }),
@@ -52,6 +85,7 @@ export default function Dashboard() {
       }
     } catch (err) {
       setLogs((prev) => prev + "\n[ERR] Network Exception: " + (err instanceof Error ? err.message : String(err)));
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -99,7 +133,7 @@ export default function Dashboard() {
             <div className="flex justify-between items-end">
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">Revenue Signal Analysis</h1>
-                <p className="text-sm text-gray-500 mt-1">Real-time OTA price scraping, fact-checking, and anomaly detection.</p>
+                <p className="text-sm text-gray-500 mt-1">Real-time OTA price scraping, geospatial fact-checking, and anomaly detection.</p>
               </div>
               <button 
                 onClick={runAnalysis}
@@ -131,11 +165,38 @@ export default function Dashboard() {
                       <input type="text" value={config.hotelName} onChange={(e) => setConfig({...config, hotelName: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded text-sm px-3 py-2 focus:bg-white focus:border-black focus:ring-1 focus:ring-black outline-none transition-all"/>
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Monitored Comp Set</label>
+                      <div className="flex justify-between items-center mb-1.5">
+                        <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">Monitored Comp Set</label>
+                        <button onClick={() => setShowMap(!showMap)} className="text-[10px] uppercase font-bold text-blue-600 hover:text-blue-800 flex items-center">
+                          <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                          {showMap ? "Hide Geo-Map" : "Geo-Discover"}
+                        </button>
+                      </div>
                       <textarea value={config.competitors} onChange={(e) => setConfig({...config, competitors: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded text-sm px-3 py-2 focus:bg-white focus:border-black focus:ring-1 focus:ring-black outline-none transition-all resize-none" rows={2}/>
                     </div>
+
+                    {/* MAP WRAPPER MODULE */}
+                    {showMap && (
+                      <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-md animate-in fade-in duration-300">
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="text-[10px] font-bold text-gray-700 uppercase tracking-wider">Radius Limit: {radiusKm} km</label>
+                          <input type="range" min="1" max="10" step="0.5" value={radiusKm} onChange={(e) => setRadiusKm(parseFloat(e.target.value))} className="w-1/2 accent-black h-1 bg-gray-200 rounded appearance-none cursor-pointer"/>
+                        </div>
+                        <div className="h-48 w-full relative">
+                          <MapWrapper 
+                            targetLocation={targetLocation}
+                            radiusKm={radiusKm}
+                            nearbyHotels={DELHI_HOTELS}
+                            selectedCompetitors={selectedComps}
+                            onToggleCompetitor={toggleCompetitor}
+                          />
+                        </div>
+                        <p className="text-[10px] text-gray-500 mt-2 text-center">Click markers to add/remove competitors within the radius.</p>
+                      </div>
+                    )}
+
                     <div>
-                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Alert Dispatch (WhatsApp)</label>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 mt-4">Alert Dispatch (WhatsApp)</label>
                       <input type="text" value={config.whatsapp} onChange={(e) => setConfig({...config, whatsapp: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded text-sm px-3 py-2 focus:bg-white focus:border-black focus:ring-1 focus:ring-black outline-none transition-all font-mono"/>
                     </div>
                   </div>
