@@ -6,7 +6,6 @@ import "leaflet/dist/leaflet.css";
 
 // Fix for default marker icons in Leaflet with Next.js/Webpack
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// @ts-expect-error - Leaflet internals
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 L.Icon.Default.mergeOptions({
