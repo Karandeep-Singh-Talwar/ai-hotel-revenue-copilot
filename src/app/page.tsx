@@ -100,12 +100,19 @@ export default function Dashboard() {
           headers: { 'Content-Type': 'text/plain' }
         });
         
-        const nodes = overpassRes.data.elements;
+        interface OverpassNode {
+          id: number;
+          lat: number;
+          lon: number;
+          tags?: { name?: string };
+        }
+        
+        const nodes: OverpassNode[] = overpassRes.data.elements;
         const hotels: Hotel[] = nodes
-          .filter((n: any) => n.tags && n.tags.name)
-          .map((n: any) => ({
+          .filter((n: OverpassNode) => n.tags && n.tags.name)
+          .map((n: OverpassNode) => ({
             id: n.id.toString(),
-            name: n.tags.name,
+            name: n.tags.name!,
             lat: n.lat,
             lng: n.lon
           }));
