@@ -112,7 +112,7 @@ export default function Dashboard() {
           .filter((n: OverpassNode) => n.tags && n.tags.name)
           .map((n: OverpassNode) => ({
             id: n.id.toString(),
-            name: n.tags.name!,
+            name: n.tags?.name || "Unknown Property",
             lat: n.lat,
             lng: n.lon
           }));
