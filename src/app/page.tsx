@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState("analysis");
   const [config, setConfig] = useState({
     hotelName: "Taj Mahal New Delhi",
     competitors: "Oberoi, Leela Palace, ITC Maurya",
