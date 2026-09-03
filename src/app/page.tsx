@@ -2,6 +2,17 @@
 
 import { useState } from "react";
 
+// Define the shape of our API result to satisfy TypeScript instead of using 'any'
+interface AnalysisResult {
+  currentMedian: number;
+  baseline: number;
+  shiftPct: number;
+  action: "RAISE" | "DROP" | "HOLD";
+  reason: string;
+  alertMsg: string;
+  event: string | null;
+}
+
 export default function Dashboard() {
   const [config, setConfig] = useState({
     hotelName: "Taj Mahal New Delhi",
@@ -9,15 +20,15 @@ export default function Dashboard() {
     whatsapp: "+919876543210",
   });
   
-  const [pmsData, setPmsData] = useState({ occupancy: 65, adr: 15000 });
-  const [logs, setLogs] = useState("System ready. Configure your hotel and PMS data, then run analysis.");
+  const [pmsData, setPmsData] = useState({ occupancy: 65 });
+  const [logs, setLogs] = useState("System ready. Awaiting telemetry...");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
 
   const runAnalysis = async () => {
     setLoading(true);
     setResult(null);
-    setLogs("Connecting to Engine...\nScraping OTA Competitors (DuckDuckGo HTML Bypass)...\nQuerying Local Events...\nExtracting PMS Context...\n");
+    setLogs("[SYS] Initializing Revenue Intelligence Core...\n[SYS] Bypassing OTA Bot Managers...\n[SYS] Aggregating Competitor Set Pricing...\n[SYS] Ingesting PMS Context...\n");
     
     try {
       const res = await fetch("/api/analyze", {
@@ -36,188 +47,213 @@ export default function Dashboard() {
         setLogs((prev) => prev + "\n" + data.logs);
         if (data.result) setResult(data.result);
       } else {
-        setLogs((prev) => prev + "\nError: " + data.message);
+        setLogs((prev) => prev + "\n[ERR] " + data.message);
       }
     } catch (err) {
-      setLogs((prev) => prev + "\nNetwork Error: " + (err instanceof Error ? err.message : String(err)));
+      setLogs((prev) => prev + "\n[ERR] Network Exception: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-100">
-      <nav className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-              </div>
-              <h1 className="text-xl font-bold tracking-tight text-slate-800">Revenue Copilot</h1>
-            </div>
-            <div className="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-              Demo Environment
-            </div>
-          </div>
+    <div className="min-h-screen bg-[#F9FAFB] text-[#111827] font-sans selection:bg-black selection:text-white flex">
+      
+      {/* SIDEBAR */}
+      <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col">
+        <div className="h-14 flex items-center px-6 border-b border-gray-200">
+          <div className="w-4 h-4 bg-black rounded-sm mr-2"></div>
+          <span className="font-semibold text-sm tracking-tight">RevOps Intel</span>
         </div>
-      </nav>
+        <nav className="flex-1 px-4 py-6 space-y-1">
+          <a href="#" className="flex items-center px-3 py-2 text-sm font-medium bg-gray-100 text-black rounded-md">
+            <svg className="w-4 h-4 mr-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+            Market Signals
+          </a>
+          <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-md">
+            <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            Comp Sets
+          </a>
+          <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-md">
+            <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            Settings
+          </a>
+        </nav>
+      </aside>
 
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* LEFT COLUMN - CONFIG */}
-          <div className="lg:col-span-4 space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="bg-slate-50 px-5 py-4 border-b border-slate-100">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center">
-                  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                  Setup
-                </h2>
-              </div>
-              <div className="p-5 space-y-5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">Target Hotel</label>
-                  <input type="text" value={config.hotelName} onChange={(e) => setConfig({...config, hotelName: e.target.value})} className="w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2.5 border transition-colors"/>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">Competitors (Comma separated)</label>
-                  <textarea value={config.competitors} onChange={(e) => setConfig({...config, competitors: e.target.value})} className="w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2.5 border transition-colors" rows={2}/>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">WhatsApp Recipient</label>
-                  <input type="text" value={config.whatsapp} onChange={(e) => setConfig({...config, whatsapp: e.target.value})} className="w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2.5 border transition-colors"/>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="bg-slate-50 px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center">
-                  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                  PMS Context
-                </h2>
-                <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{pmsData.occupancy}%</span>
-              </div>
-              <div className="p-5">
-                <p className="text-xs text-slate-400 mb-4 leading-relaxed">Simulate your hotel's internal occupancy. The AI changes its strategy based on how full you are.</p>
-                <input type="range" min="0" max="100" value={pmsData.occupancy} onChange={(e) => setPmsData({...pmsData, occupancy: parseInt(e.target.value)})} className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"/>
-                <div className="flex justify-between text-xs text-slate-400 mt-2 font-medium">
-                  <span>0% (Empty)</span>
-                  <span>100% (Full)</span>
-                </div>
-              </div>
-            </div>
-            
-            <button 
-              onClick={runAnalysis}
-              disabled={loading}
-              className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center ${loading ? 'opacity-80 cursor-not-allowed' : 'hover:-translate-y-0.5 hover:shadow-lg'}`}
-            >
-              {loading ? (
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-              ) : (
-                <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-              )}
-              {loading ? 'Analyzing Market...' : 'Run Intelligence'}
-            </button>
+      {/* MAIN CONTENT */}
+      <main className="flex-1 flex flex-col min-w-0">
+        
+        {/* HEADER */}
+        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-8">
+          <div className="flex items-center text-sm text-gray-500">
+            <span>Platform</span>
+            <span className="mx-2">/</span>
+            <span className="font-medium text-gray-900">Intelligence Terminal</span>
           </div>
+          <div className="flex items-center space-x-4">
+            <span className="flex items-center text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-200">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse"></span>
+              Systems Operational
+            </span>
+          </div>
+        </header>
 
-          {/* RIGHT COLUMN - RESULTS */}
-          <div className="lg:col-span-8 space-y-6">
-            {!result && !loading && (
-              <div className="bg-white rounded-2xl border border-dashed border-slate-300 h-[400px] flex flex-col items-center justify-center text-slate-400">
-                <svg className="w-16 h-16 mb-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                <p className="text-sm font-medium">No analysis run yet.</p>
-                <p className="text-xs mt-1">Configure your parameters and click Run Intelligence.</p>
+        {/* DASHBOARD BODY */}
+        <div className="flex-1 overflow-auto p-8">
+          <div className="max-w-6xl mx-auto space-y-8">
+            
+            <div className="flex justify-between items-end">
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-gray-900">Revenue Signal Analysis</h1>
+                <p className="text-sm text-gray-500 mt-1">Real-time OTA price scraping and anomaly detection.</p>
               </div>
-            )}
+              <button 
+                onClick={runAnalysis}
+                disabled={loading}
+                className={`bg-black text-white text-sm font-medium px-5 py-2.5 rounded shadow-sm flex items-center transition-all ${loading ? 'opacity-70 cursor-wait' : 'hover:bg-gray-800 hover:shadow'}`}
+              >
+                {loading ? (
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                ) : (
+                  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                )}
+                {loading ? 'Executing Scan...' : 'Execute Analysis'}
+              </button>
+            </div>
 
-            {loading && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-8 h-[400px] flex flex-col items-center justify-center space-y-6">
-                <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
-                <div className="text-center">
-                  <p className="text-lg font-semibold text-slate-700">AI is scraping live OTAs...</p>
-                  <p className="text-sm text-slate-500 mt-1">Bypassing firewalls and calculating anomalies.</p>
-                </div>
-              </div>
-            )}
-
-            {result && !loading && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {/* Highlight Card */}
-                <div className={`rounded-2xl p-6 shadow-sm border ${
-                  result.action === 'RAISE' ? 'bg-green-50 border-green-200' :
-                  result.action === 'DROP' ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <div className="flex items-start justify-between">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              
+              {/* LEFT COL: CONFIGURATION */}
+              <div className="xl:col-span-1 space-y-6">
+                
+                {/* CONFIG CARD */}
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                  <div className="px-5 py-4 border-b border-gray-200">
+                    <h2 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Property Configuration</h2>
+                  </div>
+                  <div className="p-5 space-y-4">
                     <div>
-                      <p className={`text-sm font-bold uppercase tracking-wider mb-1 ${
-                        result.action === 'RAISE' ? 'text-green-700' : result.action === 'DROP' ? 'text-red-700' : 'text-slate-600'
-                      }`}>Recommendation</p>
-                      <h3 className={`text-4xl font-extrabold mb-3 ${
-                        result.action === 'RAISE' ? 'text-green-900' : result.action === 'DROP' ? 'text-red-900' : 'text-slate-900'
-                      }`}>{result.action} RATE</h3>
-                      <p className={`text-lg font-medium leading-relaxed ${
-                        result.action === 'RAISE' ? 'text-green-800' : result.action === 'DROP' ? 'text-red-800' : 'text-slate-700'
-                      }`}>{result.reason}</p>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Target Property</label>
+                      <input type="text" value={config.hotelName} onChange={(e) => setConfig({...config, hotelName: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded text-sm px-3 py-2 focus:bg-white focus:border-black focus:ring-1 focus:ring-black outline-none transition-all"/>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Monitored Comp Set</label>
+                      <textarea value={config.competitors} onChange={(e) => setConfig({...config, competitors: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded text-sm px-3 py-2 focus:bg-white focus:border-black focus:ring-1 focus:ring-black outline-none transition-all resize-none" rows={2}/>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Alert Dispatch (WhatsApp)</label>
+                      <input type="text" value={config.whatsapp} onChange={(e) => setConfig({...config, whatsapp: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded text-sm px-3 py-2 focus:bg-white focus:border-black focus:ring-1 focus:ring-black outline-none transition-all font-mono"/>
                     </div>
                   </div>
                 </div>
 
-                {/* Grid Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Market Median</p>
-                    <p className="text-2xl font-bold text-slate-900">₹{result.currentMedian.toLocaleString()}</p>
+                {/* PMS CARD */}
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                  <div className="px-5 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Internal Telemetry (PMS)</h2>
+                    <span className="font-mono text-xs font-medium bg-gray-100 px-2 py-0.5 rounded text-gray-600 border border-gray-200">{pmsData.occupancy}% OCC</span>
                   </div>
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Price Shift</p>
-                    <p className={`text-2xl font-bold ${result.shiftPct > 0 ? 'text-green-600' : result.shiftPct < 0 ? 'text-red-600' : 'text-slate-900'}`}>
-                      {result.shiftPct > 0 ? '+' : ''}{result.shiftPct.toFixed(1)}%
-                    </p>
-                  </div>
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Local Event</p>
-                    <p className="text-sm font-bold text-slate-900 mt-1 line-clamp-2">{result.event || "No major events"}</p>
+                  <div className="p-5">
+                    <p className="text-[13px] text-gray-500 mb-4 leading-relaxed">Adjust current property occupancy. The decision engine weights this metric against market fluctuations.</p>
+                    <input type="range" min="0" max="100" value={pmsData.occupancy} onChange={(e) => setPmsData({...pmsData, occupancy: parseInt(e.target.value)})} className="w-full accent-black h-1 bg-gray-200 rounded appearance-none cursor-pointer"/>
+                    <div className="flex justify-between text-[10px] uppercase font-bold tracking-wider text-gray-400 mt-3">
+                      <span>Critically Low (0%)</span>
+                      <span>Capacity (100%)</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* WhatsApp Preview */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="bg-[#075E54] px-4 py-3 flex items-center">
-                    <svg className="w-5 h-5 text-white mr-2" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                    <span className="text-white font-medium text-sm">WhatsApp Preview</span>
-                  </div>
-                  <div className="bg-[#E5DDD5] p-6 relative">
-                    {/* Background pattern mock */}
-                    <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: "radial-gradient(#000 1px, transparent 1px)", backgroundSize: "20px 20px" }}></div>
-                    <div className="bg-white rounded-lg rounded-tl-none p-4 shadow-sm relative z-10 max-w-lg">
-                      <pre className="text-sm text-slate-800 font-sans whitespace-pre-wrap">{result.alertMsg}</pre>
-                      <div className="text-right mt-1">
-                        <span className="text-[10px] text-slate-400">Now</span>
+              </div>
+
+              {/* RIGHT COL: OUTPUTS */}
+              <div className="xl:col-span-2 space-y-6">
+                
+                {/* RESULTS AREA */}
+                {result && !loading ? (
+                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    
+                    {/* PRIMARY SIGNAL */}
+                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden flex">
+                      <div className={`w-2 ${
+                        result.action === 'RAISE' ? 'bg-black' : 
+                        result.action === 'DROP' ? 'bg-red-600' : 'bg-gray-400'
+                      }`}></div>
+                      <div className="p-6 flex-1">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Algorithmic Directive</span>
+                          <span className="text-xs text-gray-400 font-mono">{new Date().toISOString().split('T')[0]}</span>
+                        </div>
+                        <div className="flex items-baseline space-x-4 mb-2">
+                          <h2 className="text-3xl font-bold tracking-tight">{result.action} RATE</h2>
+                          <span className={`px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider border ${
+                            result.action === 'RAISE' ? 'bg-black text-white border-black' : 
+                            result.action === 'DROP' ? 'bg-red-50 text-red-700 border-red-200' : 
+                            'bg-gray-100 text-gray-700 border-gray-200'
+                          }`}>
+                            Confidence: High
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">{result.reason}</p>
                       </div>
                     </div>
+
+                    {/* METRICS GRID */}
+                    <div className="grid grid-cols-3 gap-6">
+                      <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
+                        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Comp Set Median</p>
+                        <p className="text-2xl font-semibold tracking-tight">₹{result.currentMedian.toLocaleString()}</p>
+                        <p className="text-[11px] text-gray-400 mt-2 font-mono">baseline: ₹{result.baseline.toLocaleString()}</p>
+                      </div>
+                      <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
+                        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Market Variance</p>
+                        <p className={`text-2xl font-semibold tracking-tight ${result.shiftPct > 0 ? 'text-black' : result.shiftPct < 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                          {result.shiftPct > 0 ? '+' : ''}{result.shiftPct.toFixed(2)}%
+                        </p>
+                        <p className="text-[11px] text-gray-400 mt-2 font-mono">vs 14-day trailing avg</p>
+                      </div>
+                      <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex flex-col justify-between">
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Demand Drivers</p>
+                          <p className="text-sm font-medium text-gray-800 line-clamp-2">{result.event || "Standard Demand"}</p>
+                        </div>
+                        {result.event && (
+                          <span className="inline-block mt-2 text-[10px] uppercase font-bold text-white bg-black px-1.5 py-0.5 rounded w-max">Active Event</span>
+                        )}
+                      </div>
+                    </div>
+
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-lg border border-gray-200 border-dashed h-64 flex flex-col items-center justify-center text-gray-400">
+                    {loading ? (
+                      <div className="flex flex-col items-center space-y-4">
+                        <div className="w-8 h-8 border-2 border-gray-200 border-t-black rounded-full animate-spin"></div>
+                        <p className="text-sm font-medium text-gray-600">Processing market intelligence...</p>
+                      </div>
+                    ) : (
+                      <>
+                        <svg className="w-8 h-8 mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <p className="text-sm font-medium text-gray-500">System Standby</p>
+                        <p className="text-xs text-gray-400 mt-1">Configure property and execute analysis to view signals.</p>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* LOGS TERMINAL */}
+                <div className="bg-[#0A0A0A] rounded-lg shadow-sm border border-gray-800 overflow-hidden">
+                  <div className="bg-[#111] px-4 py-2.5 border-b border-gray-800 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Execution Trace</span>
+                    <span className="w-2 h-2 rounded-full bg-green-500 opacity-50"></span>
+                  </div>
+                  <div className="p-4 h-40 overflow-y-auto font-mono text-[11px] leading-relaxed text-gray-300">
+                    <pre className="whitespace-pre-wrap">{logs}</pre>
                   </div>
                 </div>
-              </div>
-            )}
 
-            {/* System Logs */}
-            <div className="bg-slate-900 rounded-2xl shadow-sm overflow-hidden border border-slate-800 mt-6">
-              <div className="bg-slate-800 px-5 py-3 border-b border-slate-700 flex items-center justify-between">
-                <div className="flex space-x-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                </div>
-                <span className="text-xs text-slate-400 font-mono tracking-wider">system.log</span>
-              </div>
-              <div className="p-5 h-48 overflow-y-auto">
-                <pre className="text-emerald-400 font-mono text-xs whitespace-pre-wrap leading-relaxed">{logs}</pre>
               </div>
             </div>
-
           </div>
         </div>
       </main>
