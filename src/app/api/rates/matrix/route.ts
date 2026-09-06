@@ -149,7 +149,7 @@ export async function GET(req: NextRequest) {
     dates,
     myHotel,
     competitors,
-    channels: ["Agoda", "Booking.com", "MakeMyTrip"],
+    channels: ["MakeMyTrip", "Agoda", "Booking.com", "EaseMyTrip", "ClearTrip"],
     timestamp: new Date().toISOString(),
   });
 }

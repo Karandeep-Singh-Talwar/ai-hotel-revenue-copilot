@@ -18,7 +18,7 @@ export default function HotelRevenueDashboard() {
     "overview"
   );
   const [selectedProperty, setSelectedProperty] = useState("The Claridges New Delhi");
-  const [selectedAlertId, setSelectedAlertId] = useState<string>("ed_sheeran");
+  const [selectedAlertId, setSelectedAlertId] = useState<string>("coldplay_delhi");
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
   const [simulatingWebhook, setSimulatingWebhook] = useState(false);
 
@@ -31,7 +31,7 @@ export default function HotelRevenueDashboard() {
     setToasts((prev) => [...prev, { id, title, message, type }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4500);
+    }, 5000);
   };
 
   const handleSimulateWhatsAppApproval = async () => {
@@ -71,8 +71,8 @@ export default function HotelRevenueDashboard() {
 
       if (data.status === "EVENT_RECEIVED") {
         addToast(
-          "WhatsApp Copilot Approved",
-          "Received 'Approve Rate' event from +919810123456. Neon stored procedure executed & ARI pushed to Channel Manager!"
+          "WhatsApp Copilot Triggered",
+          "Received 'Approve Rate' event from +919810123456. Neon stored procedure executed & ARI pushed to eZee Centrix!"
         );
       }
     } catch (err) {
@@ -88,11 +88,11 @@ export default function HotelRevenueDashboard() {
   };
 
   const handleEventPricingJump = (event: EventItem) => {
-    setSelectedAlertId("ed_sheeran");
+    setSelectedAlertId("coldplay_delhi");
     setActiveTab("ai_actions");
     addToast(
-      "Event Forecast Loaded",
-      `AI Action Center pre-filtered for ${event.name} (${event.date}).`
+      "AI Recommendation Generated",
+      `Econometric pricing brain calibrated for ${event.name} (${event.date}).`
     );
   };
 
@@ -107,23 +107,28 @@ export default function HotelRevenueDashboard() {
               <div className="aspect-square rounded size-10 bg-surface border border-primary flex items-center justify-center shadow-[0_0_10px_rgba(46,196,182,0.3)]">
                 <span className="material-symbols-outlined text-primary text-[22px]">hotel_class</span>
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col min-w-0">
                 <h1 className="text-white text-base font-heading font-semibold leading-normal">
                   RevCommand
                 </h1>
+                {/* Real Property Switcher */}
                 <select
                   value={selectedProperty}
                   onChange={(e) => {
                     setSelectedProperty(e.target.value);
-                    addToast("Property Switched", `Active property context: ${e.target.value}`);
+                    addToast("Property Switched", `Active context: ${e.target.value}`);
                   }}
-                  className="bg-transparent text-muted text-xs font-medium leading-normal outline-none cursor-pointer hover:text-white"
+                  className="bg-transparent text-muted text-xs font-medium leading-normal outline-none cursor-pointer hover:text-white truncate"
                 >
-                  <option value="5 Properties" className="bg-[#1C2541] text-white">5 Properties</option>
-                  <option value="Riverside Boutique" className="bg-[#1C2541] text-white">Riverside Boutique</option>
-                  <option value="Downtown Suites" className="bg-[#1C2541] text-white">Downtown Suites</option>
-                  <option value="City Suites" className="bg-[#1C2541] text-white">City Suites</option>
-                  <option value="Airport Hub" className="bg-[#1C2541] text-white">Airport Hub</option>
+                  <option value="The Claridges New Delhi" className="bg-[#1C2541] text-white">
+                    The Claridges New Delhi (140k)
+                  </option>
+                  <option value="The Manor Friends Colony" className="bg-[#1C2541] text-white">
+                    The Manor New Delhi (45k)
+                  </option>
+                  <option value="Apex Luxury Portfolio" className="bg-[#1C2541] text-white">
+                    Apex Portfolio (All 5 Props)
+                  </option>
                 </select>
               </div>
             </div>
@@ -206,7 +211,7 @@ export default function HotelRevenueDashboard() {
 
           {/* Bottom Controls & User Profile */}
           <div className="flex flex-col gap-4 mt-auto pt-4 border-t border-[#3A506B]/50">
-            {/* WhatsApp Copilot Simulation Trigger */}
+            {/* Live WhatsApp Copilot Simulator */}
             <button
               onClick={handleSimulateWhatsAppApproval}
               disabled={simulatingWebhook}
@@ -217,22 +222,26 @@ export default function HotelRevenueDashboard() {
                 <span className="text-[11px]">WhatsApp Copilot</span>
               </div>
               <span className="text-[10px] text-primary group-hover:underline">
-                {simulatingWebhook ? "Sending..." : "Simulate"}
+                {simulatingWebhook ? "Syncing..." : "Simulate"}
               </span>
             </button>
 
-            {/* User Profile Card matching Stitch */}
+            {/* User Profile Card */}
             <div className="flex items-center gap-3 px-2 py-1">
               <div
                 className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-8 border border-primary/40"
                 style={{
                   backgroundImage:
-                    "url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=120')",
+                    "url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120')",
                 }}
               />
               <div className="flex flex-col min-w-0">
-                <p className="text-white text-sm font-medium leading-none truncate">A. Mercer</p>
-                <p className="text-muted text-xs mt-1 leading-none font-mono">Manager</p>
+                <p className="text-white text-sm font-medium leading-none truncate">
+                  Karandeep S. Talwar
+                </p>
+                <p className="text-muted text-[11px] mt-1 leading-none font-mono">
+                  Principal Revenue Architect
+                </p>
               </div>
             </div>
           </div>

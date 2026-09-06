@@ -1,16 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export interface EventItem {
   id: string;
   name: string;
   date: string;
+  venueName: string;
   impact: "High" | "Medium" | "Low";
   attendance: string;
   distance: string;
   demandForecast?: string;
   icon: string;
+  rawEventDate?: string;
 }
 
 interface EventTimelineProps {
@@ -18,67 +20,93 @@ interface EventTimelineProps {
   onGeneratePricing?: (event: EventItem) => void;
 }
 
-const EVENTS: EventItem[] = [
-  {
-    id: "coldplay",
-    name: "Coldplay Concert",
-    date: "OCT 24-26",
-    impact: "High",
-    attendance: "45,000",
-    distance: "0.8 - 1.2 mi",
-    demandForecast: "+22% Forecasted Demand",
-    icon: "stadium",
-  },
-  {
-    id: "tech_summit",
-    name: "Tech Summit 2024",
-    date: "NOV 12-14",
-    impact: "Medium",
-    attendance: "15,000",
-    distance: "0.5 - 2.4 mi",
-    demandForecast: "+12% Forecasted Demand",
-    icon: "business_center",
-  },
-  {
-    id: "city_marathon",
-    name: "City Marathon",
-    date: "NOV 28",
-    impact: "Medium",
-    attendance: "20,000",
-    distance: "1.0 - 3.5 mi",
-    demandForecast: "+8% Forecasted Demand",
-    icon: "directions_run",
-  },
-  {
-    id: "medical_congress",
-    name: "International Medical Congress",
-    date: "DEC 05-08",
-    impact: "Low",
-    attendance: "8,500",
-    distance: "1.4 - 3.0 mi",
-    demandForecast: "+5% Forecasted Demand",
-    icon: "local_hospital",
-  },
-];
-
 export default function EventTimeline({ onSelectEvent, onGeneratePricing }: EventTimelineProps) {
+  const [events, setEvents] = useState<EventItem[]>([]);
   const [filter, setFilter] = useState<"all" | "High" | "Medium" | "Low">("High");
-  const [selectedEvent, setSelectedEvent] = useState<EventItem>(EVENTS[0]);
+  const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
   const [mapZoom, setMapZoom] = useState(1);
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
 
-  const filteredEvents = EVENTS.filter((e) => {
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      const res = await fetch("/api/events/timeline");
+      const json = await res.json();
+
+      if (json?.events && json.events.length > 0) {
+        const mapped: EventItem[] = json.events.map((e: any) => {
+          const isHigh = e.expectedAttendance > 40000 || e.surgePercentage > 25;
+          const isMed = e.expectedAttendance >= 15000 && !isHigh;
+          const impact = isHigh ? "High" : isMed ? "Medium" : "Low";
+
+          const dObj = new Date(e.eventDate);
+          const dateStr = dObj.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          });
+
+          return {
+            id: String(e.id),
+            name: e.name,
+            date: dateStr.toUpperCase(),
+            venueName: e.venueName,
+            impact,
+            attendance: e.expectedAttendance.toLocaleString("en-IN"),
+            distance: `${e.distanceMiles || 1.3} mi (${e.distanceKm || 2.1} km)`,
+            demandForecast: `+${e.surgePercentage || 24}% Forecasted Demand`,
+            icon:
+              e.category.includes("Concert") || e.category.includes("Music")
+                ? "stadium"
+                : e.category.includes("Medical")
+                ? "local_hospital"
+                : "business_center",
+            rawEventDate: e.eventDate,
+          };
+        });
+
+        setEvents(mapped);
+        setSelectedEvent(mapped[0]);
+      }
+    } catch (err) {
+      console.error("Error loading events:", err);
+    }
+  };
+
+  const filteredEvents = events.filter((e) => {
     if (filter === "all") return true;
     return e.impact === filter;
   });
 
-  const handleEventClick = (event: EventItem) => {
-    setSelectedEvent(event);
-    if (onSelectEvent) onSelectEvent(event);
+  const handleGenerateClick = async (event: EventItem) => {
+    setGeneratingId(event.id);
+    try {
+      await fetch("/api/recommendations/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hotelId: 1,
+          targetDate: event.rawEventDate || new Date().toISOString().split("T")[0],
+          eventName: event.name,
+        }),
+      });
+      if (onGeneratePricing) {
+        onGeneratePricing(event);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setGeneratingId(null);
+    }
   };
+
+  const active = selectedEvent || events[0];
 
   return (
     <div className="flex flex-1 h-full w-full overflow-hidden bg-[#0B132B] text-white">
-      {/* Main Split-Pane matching Stitch */}
+      {/* Main Split-Pane matching Google Stitch */}
       <main className="flex-1 flex flex-col md:flex-row h-full overflow-hidden">
         {/* Left Pane: Timeline (50%) */}
         <section className="w-full md:w-1/2 flex flex-col h-full border-r border-[#3A506B] bg-[#0B132B]">
@@ -88,7 +116,7 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
               Event Intelligence
             </h2>
             <p className="text-muted text-sm font-normal">
-              Correlate local city events with occupancy forecasting
+              Correlate Delhi NCR city events with occupancy forecasting
             </p>
 
             {/* Filters */}
@@ -171,13 +199,16 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
             {/* Event Cards */}
             <div className="space-y-6 relative z-10">
               {filteredEvents.map((event) => {
-                const isSelected = selectedEvent.id === event.id;
+                const isSelected = active?.id === event.id;
                 const isHigh = event.impact === "High";
 
                 return (
                   <div
                     key={event.id}
-                    onClick={() => handleEventClick(event)}
+                    onClick={() => {
+                      setSelectedEvent(event);
+                      if (onSelectEvent) onSelectEvent(event);
+                    }}
                     className="flex gap-6 group cursor-pointer"
                   >
                     {/* Timeline Node */}
@@ -214,6 +245,7 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
                         <div>
                           <p className="text-xs text-primary font-mono mb-1">{event.date}</p>
                           <h3 className="text-lg font-bold text-white font-heading">{event.name}</h3>
+                          <p className="text-xs text-muted font-mono">{event.venueName}</p>
                         </div>
                         <span
                           className={`px-2 py-1 text-[10px] font-mono border rounded ${
@@ -234,7 +266,7 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted mb-1 font-mono">Distance to Properties</p>
+                          <p className="text-xs text-muted mb-1 font-mono">Distance to Claridges</p>
                           <p className="text-sm font-mono text-white font-bold">{event.distance}</p>
                         </div>
                       </div>
@@ -248,11 +280,12 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (onGeneratePricing) onGeneratePricing(event);
+                              handleGenerateClick(event);
                             }}
-                            className="bg-primary text-background-base px-3 py-1.5 rounded text-xs font-bold font-mono hover:bg-opacity-80 transition-opacity"
+                            disabled={generatingId === event.id}
+                            className="bg-primary hover:bg-[#15bfae] text-background-base px-3 py-1.5 rounded text-xs font-bold font-mono transition-all shadow-[0_0_10px_rgba(46,196,182,0.3)] disabled:opacity-50"
                           >
-                            Generate Pricing
+                            {generatingId === event.id ? "Analyzing..." : "Generate Pricing"}
                           </button>
                         </div>
                       )}
@@ -279,14 +312,14 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
           {/* Tactical Vector Grid Overlay */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30">
             <defs>
-              <pattern id="event-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <pattern id="event-grid-delhi" width="40" height="40" patternUnits="userSpaceOnUse">
                 <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#3A506B" strokeWidth="0.5" />
               </pattern>
             </defs>
-            <rect width="100%" height="100%" fill="url(#event-grid)" />
+            <rect width="100%" height="100%" fill="url(#event-grid-delhi)" />
           </svg>
 
-          {/* Overlay UI for Map Zoom Controls */}
+          {/* Map Controls */}
           <div className="absolute top-4 right-4 flex gap-2 z-20">
             <button
               onClick={() => setMapZoom((z) => Math.min(z + 0.2, 1.8))}
@@ -304,7 +337,7 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
 
           {/* Tactical Radar Pulse & Markers */}
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-            {/* Concentric Pulse Rings for Active Event */}
+            {/* Concentric Pulse Rings */}
             <div className="absolute inset-0 m-auto w-52 h-52 bg-intelligence bg-opacity-10 rounded-full border border-intelligence border-opacity-30 animate-pulse" />
             <div className="absolute inset-0 m-auto w-36 h-36 bg-intelligence bg-opacity-20 rounded-full border border-intelligence border-opacity-50" />
 
@@ -315,34 +348,35 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
               </span>
             </div>
 
-            {/* Hotel Pins surrounding event */}
-            <div className="absolute -top-12 -left-20 w-3.5 h-3.5 bg-background-base border-2 border-primary rounded shadow-[0_0_8px_rgba(46,196,182,0.6)] z-20" />
-            <div className="absolute top-10 left-16 w-3.5 h-3.5 bg-background-base border-2 border-primary rounded shadow-[0_0_8px_rgba(46,196,182,0.6)] z-20" />
-            <div className="absolute -top-8 left-14 w-3.5 h-3.5 bg-background-base border-2 border-primary rounded shadow-[0_0_8px_rgba(46,196,182,0.6)] z-20" />
-            <div className="absolute top-16 -left-12 w-3.5 h-3.5 bg-background-base border-2 border-primary rounded shadow-[0_0_8px_rgba(46,196,182,0.6)] z-20" />
+            {/* Client Properties (The Claridges & The Manor) */}
+            <div className="absolute -top-14 -left-16 w-3.5 h-3.5 bg-background-base border-2 border-primary rounded shadow-[0_0_8px_rgba(46,196,182,0.6)] z-20" />
+            <div className="absolute top-12 left-20 w-3.5 h-3.5 bg-background-base border-2 border-primary rounded shadow-[0_0_8px_rgba(46,196,182,0.6)] z-20" />
           </div>
 
           {/* Floating Venue Tag */}
-          <div className="absolute top-[42%] left-[54%] bg-surface/90 border border-intelligence/60 px-3 py-1.5 rounded shadow-xl backdrop-blur-xs pointer-events-none">
-            <p className="text-xs font-bold text-white font-heading">{selectedEvent.name}</p>
-            <p className="text-[10px] text-intelligence font-mono">
-              {selectedEvent.attendance} Expected • {selectedEvent.distance}
-            </p>
-          </div>
+          {active && (
+            <div className="absolute top-[40%] left-[53%] bg-surface/95 border border-intelligence/70 px-3.5 py-2 rounded shadow-xl backdrop-blur-xs pointer-events-none z-20">
+              <p className="text-xs font-bold text-white font-heading">{active.name}</p>
+              <p className="text-[10px] text-intelligence font-mono">
+                {active.venueName} • {active.attendance} Expected
+              </p>
+              <p className="text-[10px] text-muted font-mono">{active.distance} to Claridges</p>
+            </div>
+          )}
 
           {/* Map Legend Bottom Bar */}
           <div className="absolute bottom-6 left-6 right-6 bg-surface border border-[#3A506B] p-3 rounded flex items-center justify-between shadow-xl z-20">
             <div className="flex items-center gap-5 text-xs font-mono text-muted">
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 bg-intelligence rounded-full shadow-[0_0_6px_rgba(255,159,28,0.8)]"></div>
-                <span>Active Event</span>
+                <span>Venue Surge Focus</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 border border-primary bg-background-base"></div>
-                <span>Your Properties</span>
+                <span>Claridges & Manor</span>
               </div>
             </div>
-            <div className="text-xs text-muted font-mono">Radius: 1.5 mi</div>
+            <div className="text-xs text-muted font-mono">Radius: 3.5 km</div>
           </div>
         </section>
       </main>

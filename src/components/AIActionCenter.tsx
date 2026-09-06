@@ -34,106 +34,76 @@ export interface AlertItem {
   }>;
 }
 
-const DEFAULT_ALERTS: AlertItem[] = [
+const INDIAN_ALERTS: AlertItem[] = [
   {
-    id: "ed_sheeran",
-    property: "Property A",
+    id: "coldplay_delhi",
+    property: "The Claridges",
     propertyName: "The Claridges New Delhi",
-    title: "Ed Sheeran Concert Surge",
-    rateTag: "+15% Rate",
+    title: "Coldplay Live & Tech Expo Surge",
+    rateTag: "+24.3% Rate",
     rateTagColor: "primary",
-    impactText: "Impact: +$45 RevPAR",
-    timeAgo: "2m ago",
+    impactText: "Impact: +₹1,750 RevPAR",
+    timeAgo: "Just now",
     priority: "high",
-    dateRange: "Oct 14 - Oct 16 (Next Weekend)",
-    currentRate: 145,
-    suggestedRate: 166,
-    increasePct: 15,
-    revparImpact: 45,
+    dateRange: "Next Weekend (JLN Stadium & Bharat Mandapam)",
+    currentRate: 7200,
+    suggestedRate: 8950,
+    increasePct: 24.3,
+    revparImpact: 1750,
     description:
-      'Local search volume for "hotels near stadium" has spiked by 400% in the last 6 hours. Competitors on MakeMyTrip are already raising rates. AI suggests an immediate +15% hike to maximize RevPAR.',
+      "Global AI & Cloud Tech Expo (42k delegates) at Bharat Mandapam and Coldplay World Tour at JLN Stadium have driven competitor median to ₹11,200. With internal occupancy pacing at 68% and booking velocity up 3.2x, increasing rate to ₹8,950 captures ₹2.45L additional RevPAR without stalling conversion.",
     competitors: [
-      { name: "The Grand Boutique", rate: 175, change: "+10%", status: "Surging" },
-      { name: "City Center Inn", rate: 160, change: "0%", status: "Stable" },
-      { name: "Metro Hotel", rate: 180, change: "+12%", status: "Surging" },
+      { name: "The Imperial New Delhi", rate: 9950, change: "+12%", status: "Surging" },
+      { name: "The Lodhi New Delhi", rate: 12600, change: "+8%", status: "Surging" },
+      { name: "The Oberoi New Delhi", rate: 13950, change: "+5%", status: "Surging" },
+      { name: "Taj Mahal Mansingh", rate: 10950, change: "+7%", status: "Surging" },
+      { name: "Bloomrooms @ Janpath", rate: 4200, change: "0%", status: "Stable" },
     ],
   },
   {
-    id: "competitor_drop",
-    property: "Property C",
-    propertyName: "Downtown Suites",
-    title: "Competitor Drop (Agoda)",
-    rateTag: "-5% Match",
+    id: "mmt_parity_warning",
+    property: "The Manor",
+    propertyName: "The Manor New Delhi",
+    title: "MakeMyTrip Parity Defend Rate",
+    rateTag: "-₹600 Match",
     rateTagColor: "accent",
-    impactText: "Defend Occupancy",
-    timeAgo: "1h ago",
+    impactText: "Defend Booking Velocity",
+    timeAgo: "45m ago",
     priority: "med",
-    dateRange: "Oct 18 - Oct 20",
-    currentRate: 140,
-    suggestedRate: 133,
-    increasePct: -5,
-    revparImpact: 18,
+    dateRange: "Oct 28 - Oct 30",
+    currentRate: 5900,
+    suggestedRate: 5300,
+    increasePct: -10.1,
+    revparImpact: 600,
     description:
-      "Agoda parity warning. City Suites dropped rates to $130, undercutting your listing by $10. Defend high booking pace by adjusting rate downward by 5% with minimum length of stay restriction.",
+      "MakeMyTrip channel scan flagged competitor aggressive flash-sale in Friends Colony / South Delhi cluster. Adjusting rate to ₹5,300 with 2-night minimum length of stay restriction secures baseline volume before weekend compression kicks in.",
     competitors: [
-      { name: "City Suites", rate: 130, change: "-8%", status: "Surging" },
-      { name: "The Grand", rate: 142, change: "0%", status: "Stable" },
+      { name: "Bloomrooms @ Janpath", rate: 4100, change: "-6%", status: "Surging" },
+      { name: "The Claridges New Delhi", rate: 7200, change: "0%", status: "Stable" },
     ],
   },
   {
-    id: "tech_summit",
-    property: "Property B",
-    propertyName: "Riverside Boutique",
-    title: "Weekend Tech Summit",
-    rateTag: "+8% Rate",
+    id: "tech_expo_delhi",
+    property: "The Claridges",
+    propertyName: "The Claridges New Delhi",
+    title: "IITF Trade Fair Yield Hike",
+    rateTag: "+18.4% Rate",
     rateTagColor: "primary",
-    impactText: "Impact: +$22 RevPAR",
-    timeAgo: "3h ago",
+    impactText: "Impact: +₹1,320 RevPAR",
+    timeAgo: "2h ago",
     priority: "med",
-    dateRange: "Nov 12 - Nov 14",
-    currentRate: 150,
-    suggestedRate: 162,
-    increasePct: 8,
-    revparImpact: 22,
+    dateRange: "Nov 14 - Nov 18",
+    currentRate: 7200,
+    suggestedRate: 8520,
+    increasePct: 18.4,
+    revparImpact: 1320,
     description:
-      "Bharat Mandapam Tech Summit registration crossed 15,000 delegates. High demand anticipated for premium room tiers. AI econometric shrinkage recommends lifting rate by +8%.",
+      "India International Trade Fair (IITF) at Pragati Maidan (1.3 mi away). B2B business traveler demand anticipated to surge starting Thursday check-ins. Recommend lifting standard corporate rates to capture unconstrained demand.",
     competitors: [
-      { name: "The Oberoi", rate: 195, change: "+5%", status: "Surging" },
-      { name: "Taj Mahal Hotel", rate: 188, change: "+6%", status: "Surging" },
+      { name: "The Imperial", rate: 10200, change: "+10%", status: "Surging" },
+      { name: "Taj Mansingh", rate: 11200, change: "+6%", status: "Surging" },
     ],
   },
-  {
-    id: "airport_pacing",
-    property: "Property D",
-    propertyName: "Airport Hub",
-    title: "Airport Hub Occupancy Pacing",
-    rateTag: "+4% Rate",
-    rateTagColor: "primary",
-    impactText: "Impact: +$15 RevPAR",
-    timeAgo: "5h ago",
-    priority: "low",
-    dateRange: "Nov 20 - Nov 22",
-    currentRate: 115,
-    suggestedRate: 120,
-    increasePct: 4,
-    revparImpact: 15,
-    description:
-      "Occupancy pacing is currently 8% ahead of target for next weekend. Yield management recommends incremental +4% adjustment.",
-    competitors: [
-      { name: "Airport Plaza", rate: 122, change: "+2%", status: "Stable" },
-      { name: "Transit Suites", rate: 110, change: "0%", status: "Stable" },
-    ],
-  },
-];
-
-const BOOKING_CURVE_DATA = [
-  { day: "Today", current: 20, optimized: 20 },
-  { day: "D-10", current: 32, optimized: 38 },
-  { day: "D-8", current: 44, optimized: 54 },
-  { day: "D-6", current: 55, optimized: 69 },
-  { day: "D-4", current: 68, optimized: 82 },
-  { day: "D-2", current: 75, optimized: 91 },
-  { day: "Oct 14", current: 82, optimized: 96 },
 ];
 
 interface AIActionCenterProps {
@@ -148,9 +118,10 @@ export default function AIActionCenter({
   onBackToDashboard,
 }: AIActionCenterProps) {
   const [filter, setFilter] = useState<"all" | "high" | "saved">("all");
-  const [selectedId, setSelectedId] = useState<string>(selectedAlertId || "ed_sheeran");
+  const [selectedId, setSelectedId] = useState<string>(selectedAlertId || "coldplay_delhi");
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSynced, setIsSynced] = useState(false);
+  const [livePaceCurve, setLivePaceCurve] = useState<any[]>([]);
 
   useEffect(() => {
     if (selectedAlertId) {
@@ -159,13 +130,47 @@ export default function AIActionCenter({
     }
   }, [selectedAlertId]);
 
-  const activeAlert = DEFAULT_ALERTS.find((a) => a.id === selectedId) || DEFAULT_ALERTS[0];
+  useEffect(() => {
+    // Fetch live recommendation from backend API
+    const fetchLatest = async () => {
+      try {
+        const res = await fetch("/api/recommendations/latest?hotelId=1");
+        const data = await res.json();
+        if (data?.paceCurve) {
+          setLivePaceCurve(
+            data.paceCurve.map((p: any) => ({
+              day: p.daysOut,
+              current: p.currentOcc,
+              optimized: p.optimizedOcc,
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Error loading live recommendation:", err);
+      }
+    };
+    fetchLatest();
+  }, []);
 
-  const filteredAlerts = DEFAULT_ALERTS.filter((item) => {
+  const activeAlert = INDIAN_ALERTS.find((a) => a.id === selectedId) || INDIAN_ALERTS[0];
+
+  const filteredAlerts = INDIAN_ALERTS.filter((item) => {
     if (filter === "high") return item.priority === "high";
     if (filter === "saved") return false;
     return true;
   });
+
+  const curveData =
+    livePaceCurve.length > 0
+      ? livePaceCurve
+      : [
+          { day: "30d Out", current: 15, optimized: 14 },
+          { day: "20d Out", current: 42, optimized: 38 },
+          { day: "10d Out", current: 68, optimized: 65 },
+          { day: "5d Out", current: 75, optimized: 82 },
+          { day: "1d Out", current: 80, optimized: 94 },
+          { day: "Check-in", current: 82, optimized: 98 },
+        ];
 
   const handleUpdateRate = async () => {
     setIsUpdating(true);
@@ -180,23 +185,23 @@ export default function AIActionCenter({
         }),
       });
       await res.json();
-    } catch (e) {
-      console.error(e);
-    }
 
-    // Interactive button animation matching Stitch
-    setTimeout(() => {
       setIsUpdating(false);
       setIsSynced(true);
       if (onSyncSuccess) {
         onSyncSuccess(
-          `Updated rate for ${activeAlert.propertyName} to $${activeAlert.suggestedRate}/night. Pushed to Agoda & MakeMyTrip.`
+          `Updated rate for ${activeAlert.propertyName} to ₹${activeAlert.suggestedRate.toLocaleString(
+            "en-IN"
+          )}/night. Stored in Neon & Synced with eZee Centrix.`
         );
       }
       setTimeout(() => {
         setIsSynced(false);
       }, 4000);
-    }, 1200);
+    } catch (e) {
+      console.error(e);
+      setIsUpdating(false);
+    }
   };
 
   return (
@@ -263,7 +268,7 @@ export default function AIActionCenter({
                     setSelectedId(alert.id);
                     setIsSynced(false);
                   }}
-                  className={`h-[100px] rounded-sm p-3 flex flex-col justify-between cursor-pointer transition-all relative group ${
+                  className={`h-[105px] rounded-sm p-3 flex flex-col justify-between cursor-pointer transition-all relative group ${
                     isSelected
                       ? "bg-highlight border-t-2 border-t-intelligence border-r border-b border-l border-border shadow-[0_0_15px_rgba(255,159,28,0.15)]"
                       : "bg-background-dark border border-border hover:border-primary hover:bg-[#151d38]"
@@ -278,7 +283,7 @@ export default function AIActionCenter({
                             : "bg-primary"
                         }`}
                       />
-                      <span className="text-xs font-bold text-white uppercase tracking-wider">
+                      <span className="text-xs font-bold text-white uppercase tracking-wider truncate max-w-[200px]">
                         {alert.property}
                       </span>
                     </div>
@@ -349,7 +354,7 @@ export default function AIActionCenter({
                     >
                       {activeAlert.priority === "high" ? "High Priority" : "Standard Priority"}
                     </span>
-                    <span className="text-sm text-muted">{activeAlert.dateRange}</span>
+                    <span className="text-sm text-muted font-mono">{activeAlert.dateRange}</span>
                   </div>
                   <h1 className="text-3xl font-bold text-white mb-2 font-heading">
                     {activeAlert.title}
@@ -368,7 +373,7 @@ export default function AIActionCenter({
                     Current Rate
                   </span>
                   <div className="text-2xl font-bold text-white font-mono">
-                    ${activeAlert.currentRate}
+                    ₹{activeAlert.currentRate.toLocaleString("en-IN")}
                     <span className="text-sm font-normal text-muted">/night</span>
                   </div>
                 </div>
@@ -381,11 +386,13 @@ export default function AIActionCenter({
                     Suggested Rate
                   </span>
                   <div className="text-2xl font-bold text-primary font-mono">
-                    ${activeAlert.suggestedRate}
+                    ₹{activeAlert.suggestedRate.toLocaleString("en-IN")}
                     <span className="text-sm font-normal text-primary/70">/night</span>
                   </div>
                   <div className="text-xs text-primary/80 mt-2 font-mono font-semibold">
-                    {activeAlert.increasePct > 0 ? `+${activeAlert.increasePct}% Increase` : `${activeAlert.increasePct}% Decrease`}
+                    {activeAlert.increasePct > 0
+                      ? `+${activeAlert.increasePct}% Increase`
+                      : `${activeAlert.increasePct}% Match`}
                   </div>
                 </div>
 
@@ -395,7 +402,7 @@ export default function AIActionCenter({
                     Proj. RevPAR Impact
                   </span>
                   <div className="text-2xl font-bold text-white font-mono">
-                    +${activeAlert.revparImpact}
+                    +₹{activeAlert.revparImpact.toLocaleString("en-IN")}
                     <span className="text-sm font-normal text-muted">/room</span>
                   </div>
                 </div>
@@ -405,7 +412,7 @@ export default function AIActionCenter({
               <div className="bg-surface border border-border rounded-sm p-6 mb-8">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-sm font-bold uppercase tracking-widest font-heading text-white">
-                    Projected Booking Curve
+                    Projected Booking Velocity Curve
                   </h3>
                   <div className="flex gap-4 text-xs font-mono">
                     <div className="flex items-center gap-2 text-muted">
@@ -422,11 +429,11 @@ export default function AIActionCenter({
                   <div className="absolute -left-7 bottom-0 text-[10px] text-muted font-mono">0%</div>
                   <div className="absolute -left-9 top-1/2 text-[10px] text-muted font-mono">50%</div>
                   <div className="absolute -left-11 top-0 text-[10px] text-muted font-mono">100%</div>
-                  <div className="absolute -bottom-6 left-0 text-[10px] text-muted font-mono">Today</div>
-                  <div className="absolute -bottom-6 right-0 text-[10px] text-muted font-mono">Oct 14</div>
+                  <div className="absolute -bottom-6 left-0 text-[10px] text-muted font-mono">30d Out</div>
+                  <div className="absolute -bottom-6 right-0 text-[10px] text-muted font-mono">Check-in</div>
 
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={BOOKING_CURVE_DATA}>
+                    <AreaChart data={curveData}>
                       <defs>
                         <linearGradient id="optGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#2EC4B6" stopOpacity={0.4} />
@@ -470,7 +477,7 @@ export default function AIActionCenter({
               <div className="bg-surface border border-border rounded-sm">
                 <div className="px-5 py-4 border-b border-border">
                   <h3 className="text-sm font-bold uppercase tracking-widest font-heading text-white">
-                    Local Competitor Pulse
+                    Local Delhi Competitor Pulse
                   </h3>
                 </div>
                 <div className="w-full overflow-x-auto">
@@ -492,7 +499,9 @@ export default function AIActionCenter({
                           }`}
                         >
                           <td className="px-5 py-3 font-medium text-white">{comp.name}</td>
-                          <td className="px-5 py-3 text-white">${comp.rate}</td>
+                          <td className="px-5 py-3 text-white">
+                            ₹{comp.rate.toLocaleString("en-IN")}
+                          </td>
                           <td
                             className={`px-5 py-3 font-bold ${
                               comp.change.startsWith("+")
@@ -532,7 +541,7 @@ export default function AIActionCenter({
                   Push to Channel Manager
                 </span>
                 <span className="text-xs text-muted">
-                  Syncs to Agoda, MakeMyTrip immediately.
+                  Syncs to MakeMyTrip, Agoda, Booking.com via eZee Centrix immediately.
                 </span>
               </div>
               <div className="flex items-center gap-4">
@@ -560,7 +569,7 @@ export default function AIActionCenter({
                   >
                     {isSynced ? "check" : "sync"}
                   </span>
-                  {isUpdating ? "Syncing..." : isSynced ? "Synced" : "Update Rate"}
+                  {isUpdating ? "Syncing with eZee..." : isSynced ? "Synced" : "Update Rate"}
                 </button>
               </div>
             </div>
