@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # 1. THE APPLICATION GATEWAY ("THE MANAGER")
+  nextjs-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ams-hotel-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL:-postgresql://ams_user:ams_secret@ep-cool-fog-123456.us-east-2.aws.neon.tech/ams_hotel_db?sslmode=require}
+      - WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN:-ams_hotel_webhook_token_2026}
+      - WHATSAPP_APP_SECRET=${WHATSAPP_APP_SECRET:-}
+      - WHATSAPP_API_TOKEN=${WHATSAPP_API_TOKEN:-}
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID:-}
+    restart: unless-stopped
+
+  # 2. COMPETITOR RATE SCOUT WORKER
+  scout-scraper-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.engine
+    container_name: ams-scout-scraper
+    command: ["python", "engine/scout_scraper.py", "--hotel-id", "1", "--days", "30"]
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - RESIDENTIAL_PROXY_1=${RESIDENTIAL_PROXY_1:-}
+    restart: unless-stopped
+
+  # 3. EVENT INTELLIGENCE SCRAPER WORKER
+  event-scraper-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.engine
+    container_name: ams-event-scraper
+    command: ["python", "engine/event_scraper.py", "--agency-id", "a0000000-0000-0000-0000-000000000001"]
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    restart: unless-stopped
+
+  # 4. PREDICTIVE PRICING & REVENUE ENGINE WORKER
+  pricing-brain-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.engine
+    container_name: ams-pricing-brain
+    command: ["python", "engine/pricing_brain.py", "--hotel-id", "1"]
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    restart: unless-stopped
