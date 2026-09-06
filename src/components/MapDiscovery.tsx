@@ -59,23 +59,25 @@ export default function MapDiscovery({
   };
 
   return (
-    <div className="h-full w-full rounded-md overflow-hidden relative border border-gray-200 shadow-inner z-0">
+    <div className="h-full w-full rounded-md overflow-hidden relative border border-[#3A506B] shadow-inner z-0 bg-[#050914]">
       <MapContainer 
         center={targetLocation} 
         zoom={13} 
-        style={{ height: "100%", width: "100%" }}
-        scrollWheelZoom={false}
+        style={{ height: "100%", width: "100%", background: "#050914" }}
+        scrollWheelZoom={true}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://carto.com/">CARTO</a> | OpenStreetMap'
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
         
         {/* Target Hotel Marker */}
         <Marker position={targetLocation} icon={redIcon}>
           <Popup>
-            <strong>Target Property</strong><br/>
-            (Center of Search Radius)
+            <div className="p-2 text-white">
+              <strong className="block text-primary">Target Property</strong>
+              <span className="text-xs text-muted font-mono">(Center of Search Radius)</span>
+            </div>
           </Popup>
         </Marker>
 
@@ -83,7 +85,7 @@ export default function MapDiscovery({
         <Circle 
           center={targetLocation} 
           radius={radiusKm * 1000} // meters
-          pathOptions={{ color: 'black', fillColor: 'black', fillOpacity: 0.05, weight: 1 }}
+          pathOptions={{ color: '#FF9F1C', fillColor: '#FF9F1C', fillOpacity: 0.1, weight: 1.5, dashArray: "4, 6" }}
         />
 
         {/* Nearby Hotels */}

@@ -1,12 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import TacticalMapWrapper from "./TacticalMapWrapper";
+import type { MapEvent } from "./TacticalDarkMap";
 
 export interface EventItem {
   id: string;
   name: string;
   date: string;
   venueName: string;
+  lat: number;
+  lng: number;
   impact: "High" | "Medium" | "Low";
   attendance: string;
   distance: string;
@@ -20,11 +24,69 @@ interface EventTimelineProps {
   onGeneratePricing?: (event: EventItem) => void;
 }
 
+const INITIAL_EVENTS: EventItem[] = [
+  {
+    id: "coldplay_delhi",
+    name: "Coldplay Live Tour 2026",
+    date: "NOV 14",
+    venueName: "Jawaharlal Nehru Stadium",
+    lat: 28.5828,
+    lng: 77.2344,
+    impact: "High",
+    attendance: "65,000",
+    distance: "1.3 mi (2.1 km)",
+    demandForecast: "+42% Forecasted Demand",
+    icon: "stadium",
+    rawEventDate: "2026-11-14",
+  },
+  {
+    id: "tech_expo",
+    name: "India International Tech Expo",
+    date: "NOV 18",
+    venueName: "Bharat Mandapam (Pragati Maidan)",
+    lat: 28.6184,
+    lng: 77.2415,
+    impact: "High",
+    attendance: "42,000",
+    distance: "2.4 mi (3.8 km)",
+    demandForecast: "+28% Forecasted Demand",
+    icon: "business_center",
+    rawEventDate: "2026-11-18",
+  },
+  {
+    id: "delhi_marathon",
+    name: "Delhi Half Marathon 2026",
+    date: "NOV 24",
+    venueName: "JLN Stadium & Central Vista",
+    lat: 28.5828,
+    lng: 77.2344,
+    impact: "Medium",
+    attendance: "28,000",
+    distance: "1.3 mi (2.1 km)",
+    demandForecast: "+18% Forecasted Demand",
+    icon: "sports_score",
+    rawEventDate: "2026-11-24",
+  },
+  {
+    id: "fintech_summit",
+    name: "Global Fintech Summit 2026",
+    date: "DEC 02",
+    venueName: "Yashobhoomi IICC, Dwarka",
+    lat: 28.5524,
+    lng: 77.0583,
+    impact: "High",
+    attendance: "45,000",
+    distance: "11.5 mi (18.5 km)",
+    demandForecast: "+34% Forecasted Demand",
+    icon: "domain",
+    rawEventDate: "2026-12-02",
+  },
+];
+
 export default function EventTimeline({ onSelectEvent, onGeneratePricing }: EventTimelineProps) {
-  const [events, setEvents] = useState<EventItem[]>([]);
+  const [events, setEvents] = useState<EventItem[]>(INITIAL_EVENTS);
   const [filter, setFilter] = useState<"all" | "High" | "Medium" | "Low">("High");
-  const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
-  const [mapZoom, setMapZoom] = useState(1);
+  const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(INITIAL_EVENTS[0]);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -53,14 +115,16 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
             name: e.name,
             date: dateStr.toUpperCase(),
             venueName: e.venueName,
+            lat: typeof e.lat === "number" ? e.lat : 28.5828,
+            lng: typeof e.lng === "number" ? e.lng : 77.2344,
             impact,
             attendance: e.expectedAttendance.toLocaleString("en-IN"),
             distance: `${e.distanceMiles || 1.3} mi (${e.distanceKm || 2.1} km)`,
             demandForecast: `+${e.surgePercentage || 24}% Forecasted Demand`,
             icon:
-              e.category.includes("Concert") || e.category.includes("Music")
+              e.category?.includes("Concert") || e.category?.includes("Music")
                 ? "stadium"
-                : e.category.includes("Medical")
+                : e.category?.includes("Medical")
                 ? "local_hospital"
                 : "business_center",
             rawEventDate: e.eventDate,
@@ -103,6 +167,32 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
   };
 
   const active = selectedEvent || events[0];
+
+  const mapEvents: MapEvent[] = useMemo(() => {
+    return events.map((e) => ({
+      id: e.id,
+      name: e.name,
+      venueName: e.venueName,
+      lat: e.lat,
+      lng: e.lng,
+      date: e.date,
+      attendance: e.attendance,
+      impact: e.impact,
+      radiusMeters: e.impact === "High" ? 4500 : 3500,
+      demandForecast: e.demandForecast || "+24% Forecasted Demand",
+      distanceToClaridges: e.distance,
+    }));
+  }, [events]);
+
+  const focusedLocation = useMemo(() => {
+    if (!active) return null;
+    return {
+      lat: active.lat,
+      lng: active.lng,
+      zoom: 13,
+      id: active.id,
+    };
+  }, [active]);
 
   return (
     <div className="flex flex-1 h-full w-full overflow-hidden bg-[#0B132B] text-white">
@@ -147,8 +237,8 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
                 }`}
               >
                 <p
-                  className={`text-xs font-mono ${
-                    filter === "Medium" ? "text-primary font-bold" : "text-muted"
+                  className={`text-xs font-mono font-bold ${
+                    filter === "Medium" ? "text-primary" : "text-muted"
                   }`}
                 >
                   Medium Impact
@@ -159,13 +249,13 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
                 onClick={() => setFilter("Low")}
                 className={`flex h-8 items-center justify-center rounded px-3 transition-colors ${
                   filter === "Low"
-                    ? "bg-primary bg-opacity-10 border border-primary"
+                    ? "bg-muted bg-opacity-20 border border-muted"
                     : "bg-surface border border-[#3A506B]"
                 }`}
               >
                 <p
-                  className={`text-xs font-mono ${
-                    filter === "Low" ? "text-primary font-bold" : "text-muted"
+                  className={`text-xs font-mono font-medium ${
+                    filter === "Low" ? "text-white" : "text-muted"
                   }`}
                 >
                   Low Impact
@@ -297,87 +387,51 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
           </div>
         </section>
 
-        {/* Right Pane: Tactical Event Map (50%) */}
-        <section className="hidden md:flex md:w-1/2 bg-surface relative h-full overflow-hidden select-none">
-          {/* Tactical Map Canvas */}
-          <div
-            className="absolute inset-0 w-full h-full bg-cover bg-center transition-transform duration-300"
-            style={{
-              backgroundImage: `radial-gradient(circle at 50% 50%, rgba(255,159,28,0.18) 0%, transparent 60%), linear-gradient(rgba(11,19,43,0.7), rgba(5,9,20,0.85)), url('/stitch/events.png')`,
-              backgroundBlendMode: "overlay",
-              transform: `scale(${mapZoom})`,
+        {/* Right Pane: Tactical Real Leaflet Event Map (50%) */}
+        <section className="hidden md:flex md:w-1/2 relative h-full overflow-hidden bg-[#050914] border-l border-[#3A506B]">
+          <TacticalMapWrapper
+            center={[active?.lat || 28.5828, active?.lng || 77.2344]}
+            zoom={13}
+            focusedLocation={focusedLocation}
+            activeEventId={active?.id}
+            events={mapEvents}
+            showControls={true}
+            showFilters={true}
+            showConnectionLines={true}
+            onSelectEvent={(ev) => {
+              const match = events.find((e) => e.id === ev.id);
+              if (match) {
+                setSelectedEvent(match);
+                if (onSelectEvent) onSelectEvent(match);
+              }
+            }}
+            onQuickReview={() => {
+              if (active) handleGenerateClick(active);
             }}
           />
 
-          {/* Tactical Vector Grid Overlay */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30">
-            <defs>
-              <pattern id="event-grid-delhi" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#3A506B" strokeWidth="0.5" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#event-grid-delhi)" />
-          </svg>
-
-          {/* Map Controls */}
-          <div className="absolute top-4 right-4 flex gap-2 z-20">
-            <button
-              onClick={() => setMapZoom((z) => Math.min(z + 0.2, 1.8))}
-              className="bg-surface border border-[#3A506B] text-white p-2 rounded shadow-lg hover:bg-[#2A375C] transition-colors"
-            >
-              <span className="material-symbols-outlined text-sm">zoom_in</span>
-            </button>
-            <button
-              onClick={() => setMapZoom((z) => Math.max(z - 0.2, 0.8))}
-              className="bg-surface border border-[#3A506B] text-white p-2 rounded shadow-lg hover:bg-[#2A375C] transition-colors"
-            >
-              <span className="material-symbols-outlined text-sm">zoom_out</span>
-            </button>
-          </div>
-
-          {/* Tactical Radar Pulse & Markers */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-            {/* Concentric Pulse Rings */}
-            <div className="absolute inset-0 m-auto w-52 h-52 bg-intelligence bg-opacity-10 rounded-full border border-intelligence border-opacity-30 animate-pulse" />
-            <div className="absolute inset-0 m-auto w-36 h-36 bg-intelligence bg-opacity-20 rounded-full border border-intelligence border-opacity-50" />
-
-            {/* Event Center Pin */}
-            <div className="absolute inset-0 m-auto w-5 h-5 bg-intelligence rounded-full shadow-[0_0_18px_rgba(255,159,28,0.9)] z-20 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[12px] text-background-base font-bold">
-                star
-              </span>
-            </div>
-
-            {/* Client Properties (The Claridges & The Manor) */}
-            <div className="absolute -top-14 -left-16 w-3.5 h-3.5 bg-background-base border-2 border-primary rounded shadow-[0_0_8px_rgba(46,196,182,0.6)] z-20" />
-            <div className="absolute top-12 left-20 w-3.5 h-3.5 bg-background-base border-2 border-primary rounded shadow-[0_0_8px_rgba(46,196,182,0.6)] z-20" />
-          </div>
-
-          {/* Floating Venue Tag */}
+          {/* Tactical Active Venue Surveillance HUD Overlay */}
           {active && (
-            <div className="absolute top-[40%] left-[53%] bg-surface/95 border border-intelligence/70 px-3.5 py-2 rounded shadow-xl backdrop-blur-xs pointer-events-none z-20">
-              <p className="text-xs font-bold text-white font-heading">{active.name}</p>
-              <p className="text-[10px] text-intelligence font-mono">
-                {active.venueName} • {active.attendance} Expected
-              </p>
-              <p className="text-[10px] text-muted font-mono">{active.distance} to Claridges</p>
+            <div className="absolute top-16 left-4 bg-surface/95 border border-intelligence px-3.5 py-2.5 rounded shadow-2xl backdrop-blur-md z-[400] max-w-sm pointer-events-none">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="material-symbols-outlined text-intelligence text-base animate-pulse">radar</span>
+                <span className="font-mono text-[10px] uppercase font-bold text-intelligence tracking-wider">
+                  Tactical Surveillance Focus
+                </span>
+              </div>
+              <h4 className="font-heading text-sm font-bold text-white truncate">{active.name}</h4>
+              <p className="text-[11px] text-primary font-mono">{active.venueName}</p>
+              <div className="flex items-center gap-4 mt-2 text-[11px] font-mono text-muted">
+                <span>Expected: <strong className="text-white">{active.attendance}</strong></span>
+                <span>Distance: <strong className="text-white">{active.distance}</strong></span>
+              </div>
+              {active.demandForecast && (
+                <div className="mt-2 text-[10px] font-mono text-intelligence bg-intelligence/15 px-2 py-0.5 rounded inline-block font-bold">
+                  {active.demandForecast}
+                </div>
+              )}
             </div>
           )}
-
-          {/* Map Legend Bottom Bar */}
-          <div className="absolute bottom-6 left-6 right-6 bg-surface border border-[#3A506B] p-3 rounded flex items-center justify-between shadow-xl z-20">
-            <div className="flex items-center gap-5 text-xs font-mono text-muted">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 bg-intelligence rounded-full shadow-[0_0_6px_rgba(255,159,28,0.8)]"></div>
-                <span>Venue Surge Focus</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 border border-primary bg-background-base"></div>
-                <span>Claridges & Manor</span>
-              </div>
-            </div>
-            <div className="text-xs text-muted font-mono">Radius: 3.5 km</div>
-          </div>
         </section>
       </main>
     </div>
