@@ -1,85 +1,164 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
-  CartesianGrid,
+  Cell as RechartsCell,
 } from "recharts";
 
-export interface CompetitorChannelData {
-  rate: number;
-  rawRoom: string;
-}
-
-export interface Competitor {
-  id: number;
-  name: string;
-  starRating: number;
-  reviewScore: number;
-  channels: {
-    Agoda: CompetitorChannelData;
-    "Booking.com": CompetitorChannelData;
-    MakeMyTrip: CompetitorChannelData;
-  };
-  history14Days: Array<{
-    day: string;
-    competitorRate: number;
-    myRate: number;
-  }>;
-}
-
-export interface SelectedCellDetails {
-  competitor: Competitor;
-  channel: "Agoda" | "Booking.com" | "MakeMyTrip";
-  competitorRate: number;
+export interface CompetitorRateCell {
+  date: string;
+  isWeekend?: boolean;
   myRate: number;
-  rawRoom: string;
+  competitors: {
+    [key: string]: {
+      rate: number;
+      delta: number;
+      isUndercut: boolean;
+    };
+  };
 }
 
 interface CompetitorMatrixProps {
   onRateUpdated?: (msg: string) => void;
+  onBack?: () => void;
 }
 
-export default function CompetitorMatrix({ onRateUpdated }: CompetitorMatrixProps) {
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<{
-    myHotel: { name: string; standardRate: number };
-    competitors: Competitor[];
-    channels: Array<"Agoda" | "Booking.com" | "MakeMyTrip">;
-  } | null>(null);
+const DEFAULT_ROWS: CompetitorRateCell[] = [
+  {
+    date: "Oct 24",
+    isWeekend: false,
+    myRate: 145,
+    competitors: {
+      "The Grand": { rate: 135, delta: -10, isUndercut: true },
+      "Boutique Inn": { rate: 150, delta: 5, isUndercut: false },
+      "City Suites": { rate: 140, delta: -5, isUndercut: true },
+      "Ocean View": { rate: 145, delta: 0, isUndercut: false },
+      "Metro Hotel": { rate: 160, delta: 15, isUndercut: false },
+    },
+  },
+  {
+    date: "Oct 25",
+    isWeekend: false,
+    myRate: 145,
+    competitors: {
+      "The Grand": { rate: 155, delta: 10, isUndercut: false },
+      "Boutique Inn": { rate: 150, delta: 5, isUndercut: false },
+      "City Suites": { rate: 130, delta: -15, isUndercut: true },
+      "Ocean View": { rate: 140, delta: -5, isUndercut: true },
+      "Metro Hotel": { rate: 160, delta: 15, isUndercut: false },
+    },
+  },
+  {
+    date: "Oct 26",
+    isWeekend: true,
+    myRate: 185,
+    competitors: {
+      "The Grand": { rate: 170, delta: -15, isUndercut: true },
+      "Boutique Inn": { rate: 180, delta: -5, isUndercut: true },
+      "City Suites": { rate: 175, delta: -10, isUndercut: true },
+      "Ocean View": { rate: 190, delta: 5, isUndercut: false },
+      "Metro Hotel": { rate: 195, delta: 10, isUndercut: false },
+    },
+  },
+  {
+    date: "Oct 27",
+    isWeekend: true,
+    myRate: 185,
+    competitors: {
+      "The Grand": { rate: 165, delta: -20, isUndercut: true },
+      "Boutique Inn": { rate: 185, delta: 0, isUndercut: false },
+      "City Suites": { rate: 170, delta: -15, isUndercut: true },
+      "Ocean View": { rate: 195, delta: 10, isUndercut: false },
+      "Metro Hotel": { rate: 200, delta: 15, isUndercut: false },
+    },
+  },
+  {
+    date: "Oct 28",
+    isWeekend: false,
+    myRate: 145,
+    competitors: {
+      "The Grand": { rate: 140, delta: -5, isUndercut: true },
+      "Boutique Inn": { rate: 148, delta: 3, isUndercut: false },
+      "City Suites": { rate: 145, delta: 0, isUndercut: false },
+      "Ocean View": { rate: 152, delta: 7, isUndercut: false },
+      "Metro Hotel": { rate: 158, delta: 13, isUndercut: false },
+    },
+  },
+  {
+    date: "Oct 29",
+    isWeekend: false,
+    myRate: 145,
+    competitors: {
+      "The Grand": { rate: 142, delta: -3, isUndercut: true },
+      "Boutique Inn": { rate: 155, delta: 10, isUndercut: false },
+      "City Suites": { rate: 138, delta: -7, isUndercut: true },
+      "Ocean View": { rate: 145, delta: 0, isUndercut: false },
+      "Metro Hotel": { rate: 162, delta: 17, isUndercut: false },
+    },
+  },
+  {
+    date: "Oct 30",
+    isWeekend: false,
+    myRate: 150,
+    competitors: {
+      "The Grand": { rate: 148, delta: -2, isUndercut: true },
+      "Boutique Inn": { rate: 152, delta: 2, isUndercut: false },
+      "City Suites": { rate: 145, delta: -5, isUndercut: true },
+      "Ocean View": { rate: 160, delta: 10, isUndercut: false },
+      "Metro Hotel": { rate: 165, delta: 15, isUndercut: false },
+    },
+  },
+];
 
-  const [selectedCell, setSelectedCell] = useState<SelectedCellDetails | null>(null);
+const COMPETITOR_NAMES = [
+  "The Grand",
+  "Boutique Inn",
+  "City Suites",
+  "Ocean View",
+  "Metro Hotel",
+];
+
+export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMatrixProps) {
+  const [selectedOta, setSelectedOta] = useState<string>("Agoda");
+  const [matrixData, setMatrixData] = useState<CompetitorRateCell[]>(DEFAULT_ROWS);
+  const [selectedCell, setSelectedCell] = useState<{
+    date: string;
+    competitor: string;
+    theirRate: number;
+    myRate: number;
+    delta: number;
+  } | null>({
+    date: "Oct 24",
+    competitor: "The Grand",
+    theirRate: 135,
+    myRate: 145,
+    delta: -10,
+  });
+
   const [isMatchingRate, setIsMatchingRate] = useState(false);
-  const [activeChannelFilter, setActiveChannelFilter] = useState<string>("All");
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  useEffect(() => {
-    fetchMatrixData();
-  }, []);
-
-  const fetchMatrixData = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/rates/matrix?hotelId=1");
-      const json = await res.json();
-      setData(json);
-    } catch (err) {
-      console.error("Failed to load rate matrix:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const myRate = data?.myHotel.standardRate || 7200;
+  // 14-day history mock data for selected competitor
+  const historyData = [
+    { day: "D-13", rate: 130, undercut: true },
+    { day: "D-11", rate: 132, undercut: true },
+    { day: "D-9", rate: 135, undercut: true },
+    { day: "D-7", rate: 140, undercut: true },
+    { day: "D-5", rate: 145, undercut: false },
+    { day: "D-3", rate: 150, undercut: false },
+    { day: "D-1", rate: 135, undercut: true },
+  ];
 
   const handleMatchRate = async () => {
     if (!selectedCell) return;
     setIsMatchingRate(true);
+
     try {
       const res = await fetch("/api/recommendations/approve", {
         method: "POST",
@@ -87,365 +166,317 @@ export default function CompetitorMatrix({ onRateUpdated }: CompetitorMatrixProp
         body: JSON.stringify({
           recommendationId: 1,
           hotelId: 1,
-          customRate: selectedCell.competitorRate,
+          customRate: selectedCell.theirRate,
         }),
       });
       const result = await res.json();
       if (result.success) {
+        // Update local matrix state
+        setMatrixData((prev) =>
+          prev.map((row) => {
+            if (row.date === selectedCell.date) {
+              return {
+                ...row,
+                myRate: selectedCell.theirRate,
+              };
+            }
+            return row;
+          })
+        );
+        setSelectedCell((prev) => (prev ? { ...prev, myRate: selectedCell.theirRate, delta: 0 } : null));
         if (onRateUpdated) {
           onRateUpdated(
-            `Matched ${selectedCell.competitor.name} at ₹${selectedCell.competitorRate.toLocaleString("en-IN")} via eZee Centrix.`
+            `Matched rate for ${selectedCell.date} at $${selectedCell.theirRate} across OTAs.`
           );
         }
-        // Update local state
-        if (data) {
-          setData({
-            ...data,
-            myHotel: {
-              ...data.myHotel,
-              standardRate: selectedCell.competitorRate,
-            },
-          });
-        }
-        setSelectedCell((prev) =>
-          prev ? { ...prev, myRate: selectedCell.competitorRate } : null
-        );
       }
     } catch (err) {
-      console.error("Error matching competitor rate:", err);
+      console.error(err);
     } finally {
       setIsMatchingRate(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm animate-pulse flex flex-col items-center justify-center space-y-3">
-        <div className="w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin"></div>
-        <p className="text-xs text-gray-500 font-medium">Loading Multi-Channel Competitor Matrix...</p>
-      </div>
-    );
-  }
+  const handleSyncRates = () => {
+    setIsSyncing(true);
+    setTimeout(() => {
+      setIsSyncing(false);
+      if (onRateUpdated) {
+        onRateUpdated("All OTA rates synced successfully with Neon Database.");
+      }
+    }, 1200);
+  };
 
-  if (!data) return null;
-
-  const channels: Array<"Agoda" | "Booking.com" | "MakeMyTrip"> =
-    activeChannelFilter === "All"
-      ? ["Agoda", "Booking.com", "MakeMyTrip"]
-      : [activeChannelFilter as "Agoda" | "Booking.com" | "MakeMyTrip"];
+  const handleExportCsv = () => {
+    const csvContent =
+      "Date,My Hotel," +
+      COMPETITOR_NAMES.join(",") +
+      "\n" +
+      matrixData
+        .map(
+          (row) =>
+            `${row.date},${row.myRate},` +
+            COMPETITOR_NAMES.map((c) => row.competitors[c]?.rate || "").join(",")
+        )
+        .join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `competitor_matrix_${selectedOta.toLowerCase()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
-    <div className="relative bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      {/* Header & Controls */}
-      <div className="px-6 py-5 border-b border-gray-200 flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-gray-50 to-white">
-        <div>
-          <div className="flex items-center space-x-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-            <h2 className="text-base font-semibold text-gray-900 tracking-tight">
-              Live Competitor Rate Matrix
-            </h2>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200">
-              Your Rate: ₹{myRate.toLocaleString("en-IN")}
-            </span>
+    <div className="flex flex-col flex-1 h-full overflow-hidden bg-background-dark font-body antialiased">
+      {/* Minimal Header (Back-to-Main Exception matching Stitch) */}
+      <header className="flex items-center justify-between border-b border-[#293837] px-6 py-3 bg-[#111817] shrink-0">
+        <div className="flex items-center gap-4 text-white">
+          <button
+            onClick={onBack}
+            className="flex items-center justify-center size-8 rounded-full hover:bg-white/10 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="size-4 text-primary">
+              <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M44 11.2727C44 14.0109 39.8386 16.3957 33.69 17.6364C39.8386 18.877 44 21.2618 44 24C44 26.7382 39.8386 29.123 33.69 30.3636C39.8386 31.6043 44 33.9891 44 36.7273C44 40.7439 35.0457 44 24 44C12.9543 44 4 40.7439 4 36.7273C4 33.9891 8.16144 31.6043 14.31 30.3636C8.16144 29.123 4 26.7382 4 24C4 21.2618 8.16144 18.877 14.31 17.6364C8.16144 16.3957 4 14.0109 4 11.2727C4 7.25611 12.9543 4 24 4C35.0457 4 44 7.25611 44 11.2727Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+            <h1 className="text-lg font-bold leading-tight">Competitor Matrix</h1>
           </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Real-time OTA price surveillance. Click any cell to inspect 14-day history and execute rate actions.
-          </p>
         </div>
 
-        {/* Channel Filter Badges */}
-        <div className="flex items-center space-x-1.5 bg-gray-100 p-1 rounded-lg border border-gray-200 text-xs">
-          {["All", "Agoda", "Booking.com", "MakeMyTrip"].map((ch) => (
-            <button
-              key={ch}
-              onClick={() => setActiveChannelFilter(ch)}
-              className={`px-3 py-1 rounded-md font-medium transition-all ${
-                activeChannelFilter === ch
-                  ? "bg-white text-black shadow-xs font-semibold"
-                  : "text-gray-600 hover:text-black"
-              }`}
-            >
-              {ch}
-            </button>
-          ))}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleSyncRates}
+            disabled={isSyncing}
+            className="flex items-center justify-center h-8 px-4 bg-primary/10 text-primary border border-primary/20 rounded text-sm font-medium hover:bg-primary/20 transition-colors disabled:opacity-50"
+          >
+            <span className={`material-symbols-outlined mr-2 text-[18px] ${isSyncing ? "animate-spin" : ""}`}>
+              sync
+            </span>
+            {isSyncing ? "Syncing..." : "Sync Rates"}
+          </button>
+          <button
+            onClick={handleExportCsv}
+            className="flex items-center justify-center h-8 px-4 bg-[#293837] text-white rounded text-sm font-medium hover:bg-[#3A506B] transition-colors"
+          >
+            Export CSV
+          </button>
         </div>
-      </div>
+      </header>
 
-      {/* Legend */}
-      <div className="px-6 py-2.5 bg-gray-50/70 border-b border-gray-200 flex items-center justify-between text-[11px] text-gray-600">
-        <div className="flex items-center space-x-6">
-          <span className="flex items-center">
-            <span className="w-3 h-3 rounded-xs bg-red-100 border border-red-300 mr-1.5"></span>
-            <strong className="font-semibold text-red-800">Red:</strong>
-            <span className="ml-1 text-red-700">Competitor Undercutting (Below Your Rate)</span>
-          </span>
-          <span className="flex items-center">
-            <span className="w-3 h-3 rounded-xs bg-emerald-100 border border-emerald-300 mr-1.5"></span>
-            <strong className="font-semibold text-emerald-800">Green:</strong>
-            <span className="ml-1 text-emerald-700">Competitor Higher (Compression / Premium Yield)</span>
-          </span>
-        </div>
-        <span className="text-gray-400 font-mono text-[10px]">Auto-refreshed via Scout Scraper</span>
-      </div>
-
-      {/* Rate Matrix Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-gray-200 bg-gray-50/50 text-[11px] uppercase tracking-wider font-semibold text-gray-500">
-              <th className="py-3.5 px-6">Competitor Property</th>
-              <th className="py-3.5 px-4">Rating</th>
-              {channels.map((ch) => (
-                <th key={ch} className="py-3.5 px-4 text-right">
-                  {ch}
-                </th>
+      {/* Main Content Area */}
+      <main className="flex flex-1 overflow-hidden">
+        {/* Left Section: Matrix */}
+        <div className="flex-1 flex flex-col min-w-0 bg-matrix-bg relative">
+          {/* Toolbar */}
+          <div className="flex items-center justify-between p-4 border-b border-[#3A506B] bg-matrix-surface shrink-0">
+            {/* OTA Filters */}
+            <div className="flex h-8 bg-matrix-bg rounded p-1 w-fit border border-[#3A506B]">
+              {["Agoda", "MakeMyTrip", "EaseMyTrip", "ClearTrip"].map((ota) => (
+                <button
+                  key={ota}
+                  onClick={() => setSelectedOta(ota)}
+                  className={`flex cursor-pointer items-center justify-center rounded px-3 text-sm font-medium transition-colors ${
+                    selectedOta === ota
+                      ? "bg-matrix-surface text-primary shadow-sm"
+                      : "text-matrix-muted hover:text-white"
+                  }`}
+                >
+                  {ota}
+                </button>
               ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 text-sm">
-            {data.competitors.map((comp) => (
-              <tr key={comp.id} className="hover:bg-gray-50/70 transition-colors">
-                <td className="py-4 px-6 font-medium text-gray-900">
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-gray-900">{comp.name}</span>
-                    <span className="text-[11px] text-gray-400 font-mono">
-                      Comp ID #{comp.id} • Verified OTA Listing
-                    </span>
-                  </div>
-                </td>
-                <td className="py-4 px-4 whitespace-nowrap">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                    ★ {comp.starRating} ({comp.reviewScore})
-                  </span>
-                </td>
-                {channels.map((ch) => {
-                  const channelInfo = comp.channels[ch];
-                  const rate = channelInfo?.rate || 0;
-                  const isUndercut = rate < myRate;
-                  const isHigher = rate > myRate;
-                  const delta = rate - myRate;
-                  const deltaPct = ((delta / myRate) * 100).toFixed(1);
+            </div>
 
-                  return (
-                    <td key={ch} className="py-3 px-4 text-right">
-                      <button
-                        onClick={() =>
-                          setSelectedCell({
-                            competitor: comp,
-                            channel: ch,
-                            competitorRate: rate,
-                            myRate,
-                            rawRoom: channelInfo?.rawRoom || "Standard Room",
-                          })
-                        }
-                        className={`w-full text-right p-2.5 rounded-lg border transition-all duration-150 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-black ${
-                          isUndercut
-                            ? "bg-red-50/80 border-red-200 hover:bg-red-100 hover:border-red-300"
-                            : isHigher
-                            ? "bg-emerald-50/80 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300"
-                            : "bg-gray-50 border-gray-200 hover:bg-gray-100"
-                        }`}
-                      >
-                        <div className="flex flex-col items-end">
-                          <span
-                            className={`font-mono font-bold text-sm ${
-                              isUndercut
-                                ? "text-red-700"
-                                : isHigher
-                                ? "text-emerald-700"
-                                : "text-gray-800"
-                            }`}
-                          >
-                            ₹{rate.toLocaleString("en-IN")}
-                          </span>
-                          <span
-                            className={`text-[10px] font-medium mt-0.5 ${
-                              isUndercut
-                                ? "text-red-600"
-                                : isHigher
-                                ? "text-emerald-600"
-                                : "text-gray-500"
-                            }`}
-                          >
-                            {delta > 0 ? `+₹${delta.toLocaleString("en-IN")} (+${deltaPct}%)` : `₹${delta.toLocaleString("en-IN")} (${deltaPct}%)`}
-                          </span>
-                        </div>
-                      </button>
+            <div className="flex items-center gap-4 text-xs font-mono text-matrix-muted">
+              <span className="flex items-center gap-1.5">
+                <div className="size-2 rounded-full bg-matrix-accent"></div>
+                Undercutting
+              </span>
+              <span className="flex items-center gap-1.5">
+                <div className="size-2 rounded-full bg-primary"></div>
+                Higher Rate
+              </span>
+            </div>
+          </div>
+
+          {/* Matrix Table Container */}
+          <div className="flex-1 overflow-auto bg-matrix-bg">
+            <table className="matrix-table w-full text-left font-mono text-[12px] whitespace-nowrap">
+              <thead className="sticky top-0 z-40 shadow-md">
+                <tr>
+                  <th className="p-3 font-semibold text-matrix-muted min-w-[100px] border-b-2 border-b-[#3A506B] bg-[#1C2541] sticky left-0 z-30">
+                    Date
+                  </th>
+                  <th className="p-3 font-semibold text-white bg-matrix-hover min-w-[120px] border-b-2 border-b-primary shadow-[4px_0_12px_rgba(0,0,0,0.5)] sticky left-[100px] z-30">
+                    My Hotel
+                  </th>
+                  {COMPETITOR_NAMES.map((name) => (
+                    <th
+                      key={name}
+                      className="p-3 font-semibold text-matrix-muted min-w-[120px] border-b-2 border-b-[#3A506B] bg-[#1C2541]"
+                    >
+                      {name}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="text-white">
+                {matrixData.map((row) => (
+                  <tr key={row.date} className="transition-colors duration-75 hover:bg-[#2A375C]">
+                    <td className="p-3 text-matrix-muted bg-[#1C2541] sticky left-0 z-20">
+                      {row.date}
+                      {row.isWeekend && <span className="text-[#FF9F1C] ml-1">*</span>}
                     </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                    <td
+                      className={`p-3 bg-[#1C2541] font-bold shadow-[4px_0_12px_rgba(0,0,0,0.3)] text-[14px] sticky left-[100px] z-20 ${
+                        row.isWeekend ? "text-primary" : "text-white"
+                      }`}
+                    >
+                      ${row.myRate}
+                    </td>
+                    {COMPETITOR_NAMES.map((compName) => {
+                      const compData = row.competitors[compName];
+                      if (!compData) {
+                        return (
+                          <td key={compName} className="p-2 text-center text-matrix-muted">
+                            -
+                          </td>
+                        );
+                      }
+                      const isSelected =
+                        selectedCell?.date === row.date && selectedCell?.competitor === compName;
 
-      {/* SLIDE-OUT ANALYSIS PANEL / DRAWER */}
-      {selectedCell && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-          <div className="w-full max-w-lg bg-white h-full shadow-2xl flex flex-col justify-between border-l border-gray-200 animate-in slide-in-from-right duration-300">
-            {/* Drawer Header */}
-            <div className="px-6 py-5 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+                      return (
+                        <td
+                          key={compName}
+                          onClick={() =>
+                            setSelectedCell({
+                              date: row.date,
+                              competitor: compName,
+                              theirRate: compData.rate,
+                              myRate: row.myRate,
+                              delta: compData.delta,
+                            })
+                          }
+                          className={`p-2 text-center transition-all cursor-pointer ${
+                            compData.isUndercut ? "cell-undercut" : ""
+                          } ${isSelected ? "ring-2 ring-primary ring-inset" : ""}`}
+                        >
+                          <div className="flex flex-col items-center justify-center h-full">
+                            <span className="text-[14px] font-bold">${compData.rate}</span>
+                            <span
+                              className={`text-[10px] font-mono ${
+                                compData.isUndercut
+                                  ? "text-matrix-accent"
+                                  : compData.delta > 0
+                                  ? "text-primary"
+                                  : "text-matrix-muted"
+                              }`}
+                            >
+                              {compData.delta < 0
+                                ? `[-$${Math.abs(compData.delta)}]`
+                                : compData.delta > 0
+                                ? `[+$${Math.abs(compData.delta).toString().padStart(2, "0")}]`
+                                : "[ $00]"}
+                            </span>
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Right Side Panel: Price History & Cell Details (matching Stitch) */}
+        {selectedCell && (
+          <aside className="w-80 bg-matrix-surface border-l border-[#3A506B] flex flex-col shrink-0">
+            <div className="p-4 border-b border-[#3A506B] flex justify-between items-start">
               <div>
-                <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">
-                  Price Gap Analysis & Telemetry
-                </span>
-                <h3 className="text-lg font-bold text-gray-900 mt-0.5">
-                  {selectedCell.competitor.name}
+                <h3 className="text-xs text-matrix-muted uppercase tracking-wider font-semibold mb-1">
+                  Cell Details
                 </h3>
-                <span className="text-xs text-gray-500">
-                  Channel: <strong className="text-black">{selectedCell.channel}</strong>
-                </span>
+                <p className="font-mono text-white text-sm font-bold">
+                  {selectedCell.date} • {selectedCell.competitor}
+                </p>
+                <p className="text-xs text-primary mt-1 font-mono">{selectedOta}</p>
               </div>
               <button
                 onClick={() => setSelectedCell(null)}
-                className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-black hover:bg-gray-100 transition-all"
+                className="text-matrix-muted hover:text-white"
               >
-                ✕
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
-            {/* Drawer Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {/* Rate Comparison Card */}
+            <div className="p-4 flex flex-col gap-6">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                  <span className="text-[11px] uppercase font-bold text-gray-500">Your Current Rate</span>
-                  <p className="text-2xl font-bold font-mono text-gray-900 mt-1">
-                    ₹{selectedCell.myRate.toLocaleString("en-IN")}
+                <div className="bg-matrix-bg p-3 rounded border border-[#3A506B]">
+                  <p className="text-xs text-matrix-muted mb-1 font-mono">Their Rate</p>
+                  <p className="font-mono text-xl font-bold text-matrix-accent">
+                    ${selectedCell.theirRate}
                   </p>
-                  <span className="text-[11px] text-gray-400">The Claridges (BAR)</span>
                 </div>
-                <div
-                  className={`p-4 rounded-xl border ${
-                    selectedCell.competitorRate < selectedCell.myRate
-                      ? "bg-red-50 border-red-200"
-                      : "bg-emerald-50 border-emerald-200"
-                  }`}
-                >
-                  <span
-                    className={`text-[11px] uppercase font-bold ${
-                      selectedCell.competitorRate < selectedCell.myRate
-                        ? "text-red-700"
-                        : "text-emerald-700"
-                    }`}
-                  >
-                    Competitor Rate
-                  </span>
-                  <p
-                    className={`text-2xl font-bold font-mono mt-1 ${
-                      selectedCell.competitorRate < selectedCell.myRate
-                        ? "text-red-800"
-                        : "text-emerald-800"
-                    }`}
-                  >
-                    ₹{selectedCell.competitorRate.toLocaleString("en-IN")}
-                  </p>
-                  <span
-                    className={`text-[11px] font-semibold ${
-                      selectedCell.competitorRate < selectedCell.myRate
-                        ? "text-red-600"
-                        : "text-emerald-600"
-                    }`}
-                  >
-                    {selectedCell.competitorRate < selectedCell.myRate
-                      ? `Undercutting by ₹${(selectedCell.myRate - selectedCell.competitorRate).toLocaleString("en-IN")}`
-                      : `Premium: +₹${(selectedCell.competitorRate - selectedCell.myRate).toLocaleString("en-IN")}`}
-                  </span>
+                <div className="bg-matrix-bg p-3 rounded border border-[#3A506B]">
+                  <p className="text-xs text-matrix-muted mb-1 font-mono">My Rate</p>
+                  <p className="font-mono text-xl font-bold text-white">${selectedCell.myRate}</p>
                 </div>
               </div>
 
-              {/* Scraped OTA Listing Info */}
-              <div className="bg-white p-4 rounded-xl border border-gray-200 space-y-2">
-                <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">
-                  Raw OTA Scraped Listing Title
-                </span>
-                <p className="text-xs font-mono text-gray-800 bg-gray-50 p-2.5 rounded border border-gray-200">
-                  {selectedCell.rawRoom}
-                </p>
-                <div className="flex justify-between text-xs text-gray-500 pt-1">
-                  <span>Guest Rating: <strong>{selectedCell.competitor.reviewScore}/10</strong></span>
-                  <span>Classification: <strong>5-Star Luxury</strong></span>
-                </div>
-              </div>
-
-              {/* 14-DAY PRICE HISTORY LINE CHART (RECHARTS) */}
-              <div className="bg-white p-5 rounded-xl border border-gray-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs uppercase font-bold text-gray-700 tracking-wider">
-                    14-Day Price History Trajectory
-                  </span>
-                  <span className="text-[10px] font-mono text-gray-400">Recharts Telemetry</span>
-                </div>
-                <div className="h-56 w-full">
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-matrix-muted mb-3 font-mono">
+                  14-Day Price History
+                </h4>
+                {/* Recharts High-contrast chart */}
+                <div className="h-32 bg-matrix-bg border border-[#3A506B] rounded p-2">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={selectedCell.competitor.history14Days} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis dataKey="day" stroke="#9ca3af" fontSize={10} tickLine={false} />
-                      <YAxis stroke="#9ca3af" fontSize={10} tickLine={false} domain={["auto", "auto"]} />
+                    <BarChart data={historyData}>
+                      <XAxis dataKey="day" hide />
+                      <YAxis hide domain={["auto", "auto"]} />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: "#000",
-                          borderRadius: "8px",
-                          color: "#fff",
+                          backgroundColor: "#1C2541",
+                          borderColor: "#3A506B",
                           fontSize: "11px",
-                          border: "none",
+                          fontFamily: "JetBrains Mono",
                         }}
-                        formatter={(val: unknown) => [`₹${Number(val).toLocaleString("en-IN")}`, ""]}
                       />
-                      <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }} />
-                      <Line
-                        type="monotone"
-                        dataKey="competitorRate"
-                        name={selectedCell.competitor.name}
-                        stroke="#dc2626"
-                        strokeWidth={2.5}
-                        dot={{ r: 3 }}
-                        activeDot={{ r: 5 }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="myRate"
-                        name="Your Hotel (Claridges)"
-                        stroke="#059669"
-                        strokeWidth={2}
-                        strokeDasharray="4 4"
-                        dot={{ r: 2 }}
-                      />
-                    </LineChart>
+                      <Bar dataKey="rate" radius={[2, 2, 0, 0]}>
+                        {historyData.map((entry, index) => (
+                          <RechartsCell
+                            key={`cell-${index}`}
+                            fill={entry.undercut ? "#E71D36" : "#2EC4B6"}
+                            fillOpacity={entry.undercut ? 0.7 : 0.8}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
-            </div>
 
-            {/* Drawer Footer Actions */}
-            <div className="p-6 border-t border-gray-200 bg-gray-50 flex items-center justify-between space-x-4">
-              <button
-                onClick={() => setSelectedCell(null)}
-                className="px-4 py-2.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                Dismiss
-              </button>
               <button
                 onClick={handleMatchRate}
-                disabled={isMatchingRate}
-                className="flex-1 bg-black text-white text-xs font-semibold py-2.5 px-4 rounded-lg shadow-sm hover:bg-gray-800 transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
+                disabled={isMatchingRate || selectedCell.theirRate === selectedCell.myRate}
+                className="w-full py-2.5 bg-matrix-hover border border-[#3A506B] hover:bg-[#3A506B] text-white rounded text-sm font-mono font-bold transition-all disabled:opacity-40"
               >
-                {isMatchingRate ? (
-                  <>
-                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    <span>Syncing Channel Manager...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>⚡ Match Competitor Rate (₹{selectedCell.competitorRate.toLocaleString("en-IN")})</span>
-                  </>
-                )}
+                {isMatchingRate ? "Syncing..." : "Match Competitor Rate"}
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </aside>
+        )}
+      </main>
     </div>
   );
 }

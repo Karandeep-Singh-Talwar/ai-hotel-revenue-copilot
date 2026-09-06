@@ -1,27 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-primary: #2EC4B6;
+  --color-background: #0B132B;
+  --color-surface: #1C2541;
+  --color-text: #FFFFFF;
+  --color-muted: #6F7D9E;
+  --color-accent: #E71D36;
+  --color-intelligence: #FF9F1C;
+  --radius-sm: 4px;
+  --radius-md: 8px;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Satoshi', system-ui, -apple-system, sans-serif;
+  background-color: #0B132B;
+  color: #FFFFFF;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.font-heading {
+  font-family: 'Clash Display', 'Satoshi', sans-serif;
+}
+
+/* Technical terminal scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B132B;
+}
+::-webkit-scrollbar-thumb {
+  background: #3A506B;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6F7D9E;
+}
+
+/* Map Pin Pulsating Halo */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.6;
   }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.pulse-halo::before {
+  content: '';
+  position: absolute;
+  left: -50%;
+  top: -50%;
+  width: 200%;
+  height: 200%;
+  background-color: #FF9F1C;
+  border-radius: 50%;
+  z-index: -1;
+  animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+/* Undercutting & Matrix Table Styles */
+.matrix-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.matrix-table th,
+.matrix-table td {
+  border: 1px solid #3A506B;
+}
+.matrix-table th {
+  background-color: #1C2541;
+}
+
+.cell-undercut {
+  background-color: rgba(231, 29, 54, 0.12) !important;
+}
+
+/* Crosshair hover effect */
+.matrix-table tbody tr:hover td {
+  background-color: #2A375C !important;
+}
+
+.matrix-table td:hover {
+  box-shadow: inset 0 0 0 2px #18d8c5;
+  cursor: pointer;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }

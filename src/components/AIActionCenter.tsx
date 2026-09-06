@@ -8,347 +8,565 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid,
 } from "recharts";
 
-interface PaceCurvePoint {
-  daysOut: string;
-  currentVelocity: number;
-  optimizedCurve: number;
-  currentOcc: number;
-  optimizedOcc: number;
+export interface AlertItem {
+  id: string;
+  property: string;
+  propertyName: string;
+  title: string;
+  rateTag: string;
+  rateTagColor: "primary" | "accent";
+  impactText: string;
+  timeAgo: string;
+  priority: "high" | "med" | "low";
+  dateRange: string;
+  currentRate: number;
+  suggestedRate: number;
+  increasePct: number;
+  revparImpact: number;
+  description: string;
+  competitors: Array<{
+    name: string;
+    rate: number;
+    change: string;
+    status: "Surging" | "Stable";
+  }>;
 }
 
-export interface RecommendationData {
-  id: number;
-  hotelId: number;
-  hotelName: string;
-  headline: string;
-  stayDate: string;
-  currentRate: number;
-  recommendedRate: number;
-  rateDelta: number;
-  rateDeltaPct: number;
-  modelConfidence: number;
-  projectedRevparLiftPct: number;
-  status: string;
-  explanationText: string;
-  eventContext: {
-    name: string;
-    venue: string;
-    distance: string;
-    attendance: number;
-  };
-  paceCurve: PaceCurvePoint[];
-}
+const DEFAULT_ALERTS: AlertItem[] = [
+  {
+    id: "ed_sheeran",
+    property: "Property A",
+    propertyName: "The Claridges New Delhi",
+    title: "Ed Sheeran Concert Surge",
+    rateTag: "+15% Rate",
+    rateTagColor: "primary",
+    impactText: "Impact: +$45 RevPAR",
+    timeAgo: "2m ago",
+    priority: "high",
+    dateRange: "Oct 14 - Oct 16 (Next Weekend)",
+    currentRate: 145,
+    suggestedRate: 166,
+    increasePct: 15,
+    revparImpact: 45,
+    description:
+      'Local search volume for "hotels near stadium" has spiked by 400% in the last 6 hours. Competitors on MakeMyTrip are already raising rates. AI suggests an immediate +15% hike to maximize RevPAR.',
+    competitors: [
+      { name: "The Grand Boutique", rate: 175, change: "+10%", status: "Surging" },
+      { name: "City Center Inn", rate: 160, change: "0%", status: "Stable" },
+      { name: "Metro Hotel", rate: 180, change: "+12%", status: "Surging" },
+    ],
+  },
+  {
+    id: "competitor_drop",
+    property: "Property C",
+    propertyName: "Downtown Suites",
+    title: "Competitor Drop (Agoda)",
+    rateTag: "-5% Match",
+    rateTagColor: "accent",
+    impactText: "Defend Occupancy",
+    timeAgo: "1h ago",
+    priority: "med",
+    dateRange: "Oct 18 - Oct 20",
+    currentRate: 140,
+    suggestedRate: 133,
+    increasePct: -5,
+    revparImpact: 18,
+    description:
+      "Agoda parity warning. City Suites dropped rates to $130, undercutting your listing by $10. Defend high booking pace by adjusting rate downward by 5% with minimum length of stay restriction.",
+    competitors: [
+      { name: "City Suites", rate: 130, change: "-8%", status: "Surging" },
+      { name: "The Grand", rate: 142, change: "0%", status: "Stable" },
+    ],
+  },
+  {
+    id: "tech_summit",
+    property: "Property B",
+    propertyName: "Riverside Boutique",
+    title: "Weekend Tech Summit",
+    rateTag: "+8% Rate",
+    rateTagColor: "primary",
+    impactText: "Impact: +$22 RevPAR",
+    timeAgo: "3h ago",
+    priority: "med",
+    dateRange: "Nov 12 - Nov 14",
+    currentRate: 150,
+    suggestedRate: 162,
+    increasePct: 8,
+    revparImpact: 22,
+    description:
+      "Bharat Mandapam Tech Summit registration crossed 15,000 delegates. High demand anticipated for premium room tiers. AI econometric shrinkage recommends lifting rate by +8%.",
+    competitors: [
+      { name: "The Oberoi", rate: 195, change: "+5%", status: "Surging" },
+      { name: "Taj Mahal Hotel", rate: 188, change: "+6%", status: "Surging" },
+    ],
+  },
+  {
+    id: "airport_pacing",
+    property: "Property D",
+    propertyName: "Airport Hub",
+    title: "Airport Hub Occupancy Pacing",
+    rateTag: "+4% Rate",
+    rateTagColor: "primary",
+    impactText: "Impact: +$15 RevPAR",
+    timeAgo: "5h ago",
+    priority: "low",
+    dateRange: "Nov 20 - Nov 22",
+    currentRate: 115,
+    suggestedRate: 120,
+    increasePct: 4,
+    revparImpact: 15,
+    description:
+      "Occupancy pacing is currently 8% ahead of target for next weekend. Yield management recommends incremental +4% adjustment.",
+    competitors: [
+      { name: "Airport Plaza", rate: 122, change: "+2%", status: "Stable" },
+      { name: "Transit Suites", rate: 110, change: "0%", status: "Stable" },
+    ],
+  },
+];
+
+const BOOKING_CURVE_DATA = [
+  { day: "Today", current: 20, optimized: 20 },
+  { day: "D-10", current: 32, optimized: 38 },
+  { day: "D-8", current: 44, optimized: 54 },
+  { day: "D-6", current: 55, optimized: 69 },
+  { day: "D-4", current: 68, optimized: 82 },
+  { day: "D-2", current: 75, optimized: 91 },
+  { day: "Oct 14", current: 82, optimized: 96 },
+];
 
 interface AIActionCenterProps {
   onSyncSuccess?: (msg: string) => void;
-  externalRecommendation?: RecommendationData | null;
+  selectedAlertId?: string;
+  onBackToDashboard?: () => void;
 }
 
 export default function AIActionCenter({
   onSyncSuccess,
-  externalRecommendation,
+  selectedAlertId,
+  onBackToDashboard,
 }: AIActionCenterProps) {
-  const [data, setData] = useState<RecommendationData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [isApproved, setIsApproved] = useState(false);
+  const [filter, setFilter] = useState<"all" | "high" | "saved">("all");
+  const [selectedId, setSelectedId] = useState<string>(selectedAlertId || "ed_sheeran");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isSynced, setIsSynced] = useState(false);
 
   useEffect(() => {
-    if (externalRecommendation) {
-      setData(externalRecommendation);
-      setIsApproved(false);
-      setLoading(false);
-    } else {
-      fetchLatestRecommendation();
+    if (selectedAlertId) {
+      setSelectedId(selectedAlertId);
+      setIsSynced(false);
     }
-  }, [externalRecommendation]);
+  }, [selectedAlertId]);
 
-  const fetchLatestRecommendation = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/recommendations/latest?hotelId=1");
-      const json = await res.json();
-      setData(json);
-    } catch (err) {
-      console.error("Failed to load recommendation:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const activeAlert = DEFAULT_ALERTS.find((a) => a.id === selectedId) || DEFAULT_ALERTS[0];
+
+  const filteredAlerts = DEFAULT_ALERTS.filter((item) => {
+    if (filter === "high") return item.priority === "high";
+    if (filter === "saved") return false;
+    return true;
+  });
 
   const handleUpdateRate = async () => {
-    if (!data || isSyncing) return;
-    setIsSyncing(true);
-
+    setIsUpdating(true);
     try {
       const res = await fetch("/api/recommendations/approve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          recommendationId: data.id,
-          hotelId: data.hotelId,
-          customRate: data.recommendedRate,
+          recommendationId: 1,
+          hotelId: 1,
+          customRate: activeAlert.suggestedRate,
         }),
       });
-      const resData = await res.json();
-
-      if (resData.success) {
-        setIsApproved(true);
-        if (onSyncSuccess) {
-          onSyncSuccess(
-            `Rate of ₹${Number(data.recommendedRate).toLocaleString("en-IN")} published live across Agoda, Booking.com, and MakeMyTrip via eZee Centrix!`
-          );
-        }
-      }
-    } catch (err) {
-      console.error("Rate update error:", err);
-    } finally {
-      setIsSyncing(false);
+      await res.json();
+    } catch (e) {
+      console.error(e);
     }
+
+    // Interactive button animation matching Stitch
+    setTimeout(() => {
+      setIsUpdating(false);
+      setIsSynced(true);
+      if (onSyncSuccess) {
+        onSyncSuccess(
+          `Updated rate for ${activeAlert.propertyName} to $${activeAlert.suggestedRate}/night. Pushed to Agoda & MakeMyTrip.`
+        );
+      }
+      setTimeout(() => {
+        setIsSynced(false);
+      }, 4000);
+    }, 1200);
   };
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm animate-pulse flex flex-col items-center justify-center space-y-3">
-        <div className="w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin"></div>
-        <p className="text-xs text-gray-500 font-medium">Running Econometric Optimization Curves...</p>
-      </div>
-    );
-  }
-
-  if (!data) return null;
-
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-md overflow-hidden flex flex-col">
-      {/* 1. HERO BANNER */}
-      <div className="bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0F172A] text-white p-6 sm:p-8 relative overflow-hidden">
-        {/* Subtle decorative glow */}
-        <div className="absolute -right-16 -top-16 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div className="flex flex-1 h-full w-full overflow-hidden antialiased bg-[#0B132B] text-white font-mono selection:bg-primary selection:text-background-dark">
+      {/* Main Split-Pane Layout matching Stitch */}
+      <main className="flex w-full h-full">
+        {/* Left Pane: Alert Feed (400px) */}
+        <aside className="w-[400px] h-full bg-surface border-r border-border flex flex-col flex-shrink-0 z-10">
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-surface sticky top-0">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-intelligence text-[22px]">bolt</span>
+              <h2 className="text-sm font-bold uppercase tracking-widest text-white font-heading">
+                Action Center
+              </h2>
+            </div>
+            <span className="text-xs text-muted border border-border rounded-sm px-2 py-0.5 font-mono">
+              {filteredAlerts.length} Alerts
+            </span>
+          </div>
 
-        <div className="relative z-10 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center space-x-2.5">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
-                AI REVENUE DIRECTIVE
-              </span>
-              <span className="text-xs font-mono text-gray-400">
-                Target Date: <strong className="text-white">{data.stayDate}</strong>
+          {/* Filters */}
+          <div className="px-4 py-3 border-b border-border flex gap-2 overflow-x-auto bg-[#141b33]">
+            <button
+              onClick={() => setFilter("all")}
+              className={`px-3 py-1 text-xs rounded-sm border whitespace-nowrap transition-colors ${
+                filter === "all"
+                  ? "bg-highlight text-white border-border font-bold"
+                  : "bg-transparent text-muted hover:text-white border-transparent"
+              }`}
+            >
+              All Items
+            </button>
+            <button
+              onClick={() => setFilter("high")}
+              className={`px-3 py-1 text-xs rounded-sm border whitespace-nowrap transition-colors ${
+                filter === "high"
+                  ? "bg-highlight text-white border-border font-bold"
+                  : "bg-transparent text-muted hover:text-white border-transparent"
+              }`}
+            >
+              High Priority
+            </button>
+            <button
+              onClick={() => setFilter("saved")}
+              className={`px-3 py-1 text-xs rounded-sm border whitespace-nowrap transition-colors ${
+                filter === "saved"
+                  ? "bg-highlight text-white border-border font-bold"
+                  : "bg-transparent text-muted hover:text-white border-transparent"
+              }`}
+            >
+              Saved
+            </button>
+          </div>
+
+          {/* Feed List */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {filteredAlerts.map((alert) => {
+              const isSelected = alert.id === selectedId;
+              return (
+                <div
+                  key={alert.id}
+                  onClick={() => {
+                    setSelectedId(alert.id);
+                    setIsSynced(false);
+                  }}
+                  className={`h-[100px] rounded-sm p-3 flex flex-col justify-between cursor-pointer transition-all relative group ${
+                    isSelected
+                      ? "bg-highlight border-t-2 border-t-intelligence border-r border-b border-l border-border shadow-[0_0_15px_rgba(255,159,28,0.15)]"
+                      : "bg-background-dark border border-border hover:border-primary hover:bg-[#151d38]"
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          alert.priority === "high"
+                            ? "bg-intelligence animate-pulse"
+                            : "bg-primary"
+                        }`}
+                      />
+                      <span className="text-xs font-bold text-white uppercase tracking-wider">
+                        {alert.property}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-muted font-mono">{alert.timeAgo}</span>
+                  </div>
+
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <p className="text-sm font-medium text-white mb-1 truncate max-w-[240px]">
+                        {alert.title}
+                      </p>
+                      <div className="flex gap-2 text-xs">
+                        <span
+                          className={`font-bold ${
+                            alert.rateTagColor === "primary" ? "text-primary" : "text-accent"
+                          }`}
+                        >
+                          {alert.rateTag}
+                        </span>
+                        <span className="text-muted">{alert.impactText}</span>
+                      </div>
+                    </div>
+                    <span
+                      className={`material-symbols-outlined text-[20px] transition-colors ${
+                        isSelected ? "text-primary" : "text-muted group-hover:text-primary"
+                      }`}
+                    >
+                      arrow_forward
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </aside>
+
+        {/* Right Pane: Insight Detail */}
+        <section className="flex-1 bg-background-dark flex flex-col relative min-w-0">
+          {/* Top Nav Breadcrumb */}
+          <div className="h-14 border-b border-border flex items-center justify-between px-8 bg-surface">
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-muted">AI Action Center</span>
+              <span className="text-muted">/</span>
+              <span className="text-white font-bold">
+                {activeAlert.property}: {activeAlert.title}
               </span>
             </div>
-
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-gray-300 font-medium">Model Confidence:</span>
-              <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-white/10 text-emerald-300 border border-white/10">
-                {(data.modelConfidence * 100).toFixed(0)}%
-              </span>
+            <div className="flex gap-4">
+              <button className="text-muted hover:text-white transition-colors">
+                <span className="material-symbols-outlined text-[20px]">more_horiz</span>
+              </button>
             </div>
           </div>
 
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-              <span>{data.headline}</span>
-            </h1>
-            <p className="text-sm text-gray-300 mt-2 leading-relaxed max-w-4xl">
-              {data.explanationText}
-            </p>
-          </div>
-        </div>
-      </div>
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto p-8 pb-32">
+            <div className="max-w-4xl mx-auto">
+              {/* Context Header */}
+              <div className="flex items-start justify-between mb-8">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span
+                      className={`px-2 py-1 text-xs rounded-sm font-bold uppercase tracking-wider ${
+                        activeAlert.priority === "high"
+                          ? "bg-intelligence/10 text-intelligence border border-intelligence/30"
+                          : "bg-primary/10 text-primary border border-primary/30"
+                      }`}
+                    >
+                      {activeAlert.priority === "high" ? "High Priority" : "Standard Priority"}
+                    </span>
+                    <span className="text-sm text-muted">{activeAlert.dateRange}</span>
+                  </div>
+                  <h1 className="text-3xl font-bold text-white mb-2 font-heading">
+                    {activeAlert.title}
+                  </h1>
+                  <p className="text-muted text-sm max-w-2xl leading-relaxed">
+                    {activeAlert.description}
+                  </p>
+                </div>
+              </div>
 
-      {/* 2. RATE COMPARISON & REVPAR LIFT STATISTIC */}
-      <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 border-b border-gray-100 bg-gray-50/50">
-        {/* Current Rate */}
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs flex flex-col justify-between">
-          <div>
-            <span className="text-[11px] uppercase font-bold text-gray-400 tracking-wider">
-              Current Standard Rate
-            </span>
-            <div className="flex items-baseline space-x-2 mt-2">
-              <span className="text-3xl font-extrabold font-mono text-gray-900">
-                ₹{data.currentRate.toLocaleString("en-IN")}
-              </span>
-              <span className="text-xs text-gray-400 font-medium">/ night</span>
+              {/* Metrics Grid (3 cards matching Stitch) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                {/* Metric 1: Current Rate */}
+                <div className="bg-surface border border-border rounded-sm p-5">
+                  <span className="text-xs text-muted uppercase tracking-widest block mb-2 font-mono">
+                    Current Rate
+                  </span>
+                  <div className="text-2xl font-bold text-white font-mono">
+                    ${activeAlert.currentRate}
+                    <span className="text-sm font-normal text-muted">/night</span>
+                  </div>
+                </div>
+
+                {/* Metric 2: Suggested Rate (Glowing Cyan) */}
+                <div className="bg-surface border border-primary/40 rounded-sm p-5 relative overflow-hidden shadow-[0_0_15px_rgba(24,216,197,0.08)]">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 rounded-bl-full -mr-4 -mt-4 pointer-events-none"></div>
+                  <span className="text-xs text-primary uppercase tracking-widest block mb-2 font-bold flex items-center gap-1 font-mono">
+                    <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+                    Suggested Rate
+                  </span>
+                  <div className="text-2xl font-bold text-primary font-mono">
+                    ${activeAlert.suggestedRate}
+                    <span className="text-sm font-normal text-primary/70">/night</span>
+                  </div>
+                  <div className="text-xs text-primary/80 mt-2 font-mono font-semibold">
+                    {activeAlert.increasePct > 0 ? `+${activeAlert.increasePct}% Increase` : `${activeAlert.increasePct}% Decrease`}
+                  </div>
+                </div>
+
+                {/* Metric 3: Proj. RevPAR Impact */}
+                <div className="bg-surface border border-border rounded-sm p-5">
+                  <span className="text-xs text-muted uppercase tracking-widest block mb-2 font-mono">
+                    Proj. RevPAR Impact
+                  </span>
+                  <div className="text-2xl font-bold text-white font-mono">
+                    +${activeAlert.revparImpact}
+                    <span className="text-sm font-normal text-muted">/room</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Visualization Area: Projected Booking Curve */}
+              <div className="bg-surface border border-border rounded-sm p-6 mb-8">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-sm font-bold uppercase tracking-widest font-heading text-white">
+                    Projected Booking Curve
+                  </h3>
+                  <div className="flex gap-4 text-xs font-mono">
+                    <div className="flex items-center gap-2 text-muted">
+                      <span className="w-3 h-0.5 bg-muted"></span> Current Trajectory
+                    </div>
+                    <div className="flex items-center gap-2 text-primary">
+                      <span className="w-3 h-0.5 bg-primary"></span> Optimized (Suggested)
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chart Area */}
+                <div className="w-full h-64 relative border-l border-b border-border/50">
+                  <div className="absolute -left-7 bottom-0 text-[10px] text-muted font-mono">0%</div>
+                  <div className="absolute -left-9 top-1/2 text-[10px] text-muted font-mono">50%</div>
+                  <div className="absolute -left-11 top-0 text-[10px] text-muted font-mono">100%</div>
+                  <div className="absolute -bottom-6 left-0 text-[10px] text-muted font-mono">Today</div>
+                  <div className="absolute -bottom-6 right-0 text-[10px] text-muted font-mono">Oct 14</div>
+
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={BOOKING_CURVE_DATA}>
+                      <defs>
+                        <linearGradient id="optGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#2EC4B6" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="#2EC4B6" stopOpacity={0.0} />
+                        </linearGradient>
+                        <linearGradient id="currGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#6F7D9E" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="#6F7D9E" stopOpacity={0.0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="day" hide />
+                      <YAxis hide domain={[0, 100]} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#1C2541",
+                          borderColor: "#3A506B",
+                          fontSize: "11px",
+                          fontFamily: "JetBrains Mono",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="current"
+                        stroke="#6F7D9E"
+                        strokeWidth={2}
+                        fill="url(#currGradient)"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="optimized"
+                        stroke="#2EC4B6"
+                        strokeWidth={2.5}
+                        fill="url(#optGradient)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Competitor Context Table: Local Competitor Pulse */}
+              <div className="bg-surface border border-border rounded-sm">
+                <div className="px-5 py-4 border-b border-border">
+                  <h3 className="text-sm font-bold uppercase tracking-widest font-heading text-white">
+                    Local Competitor Pulse
+                  </h3>
+                </div>
+                <div className="w-full overflow-x-auto">
+                  <table className="w-full text-left text-sm whitespace-nowrap font-mono">
+                    <thead className="text-xs text-muted border-b border-border/50">
+                      <tr>
+                        <th className="px-5 py-3 font-normal">Hotel</th>
+                        <th className="px-5 py-3 font-normal">Current Rate</th>
+                        <th className="px-5 py-3 font-normal">24h Change</th>
+                        <th className="px-5 py-3 font-normal">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeAlert.competitors.map((comp, idx) => (
+                        <tr
+                          key={comp.name}
+                          className={`hover:bg-highlight/30 transition-colors ${
+                            idx < activeAlert.competitors.length - 1 ? "border-b border-border/20" : ""
+                          }`}
+                        >
+                          <td className="px-5 py-3 font-medium text-white">{comp.name}</td>
+                          <td className="px-5 py-3 text-white">${comp.rate}</td>
+                          <td
+                            className={`px-5 py-3 font-bold ${
+                              comp.change.startsWith("+")
+                                ? "text-primary"
+                                : comp.change.startsWith("-")
+                                ? "text-accent"
+                                : "text-muted"
+                            }`}
+                          >
+                            {comp.change}
+                          </td>
+                          <td className="px-5 py-3">
+                            <span
+                              className={`px-2 py-0.5 rounded-sm text-[10px] uppercase font-bold ${
+                                comp.status === "Surging"
+                                  ? "bg-primary/10 text-primary"
+                                  : "border border-border text-muted"
+                              }`}
+                            >
+                              {comp.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
-          <span className="text-[11px] text-gray-500 mt-3 flex items-center">
-            <span className="w-2 h-2 rounded-full bg-gray-400 mr-1.5"></span>
-            Baseline Best Available Rate (BAR)
-          </span>
-        </div>
 
-        {/* Suggested Optimal Rate */}
-        <div className="bg-emerald-50/60 p-5 rounded-xl border border-emerald-200/80 shadow-xs flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute top-2 right-2">
-            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-xs">
-              Algorithmic Target
-            </span>
-          </div>
-          <div>
-            <span className="text-[11px] uppercase font-bold text-emerald-800 tracking-wider">
-              Suggested Optimal Rate
-            </span>
-            <div className="flex items-baseline space-x-2 mt-2">
-              <span className="text-3xl font-extrabold font-mono text-emerald-950">
-                ₹{data.recommendedRate.toLocaleString("en-IN")}
-              </span>
-              <span className="text-xs text-emerald-800 font-medium">/ night</span>
+          {/* Sticky Action Footer */}
+          <div className="absolute bottom-0 left-0 w-full bg-surface border-t border-border p-6 shadow-[0_-10px_30px_rgba(11,19,43,0.8)] z-20">
+            <div className="max-w-4xl mx-auto flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-sm text-white font-bold font-heading">
+                  Push to Channel Manager
+                </span>
+                <span className="text-xs text-muted">
+                  Syncs to Agoda, MakeMyTrip immediately.
+                </span>
+              </div>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => {
+                    if (onBackToDashboard) onBackToDashboard();
+                  }}
+                  className="px-6 py-2.5 text-sm font-bold text-white hover:text-muted transition-colors rounded-sm uppercase tracking-wider"
+                >
+                  Dismiss
+                </button>
+                <button
+                  onClick={handleUpdateRate}
+                  disabled={isUpdating}
+                  className={`px-8 py-2.5 text-sm font-bold rounded-sm transition-all flex items-center gap-2 uppercase tracking-wider ${
+                    isSynced
+                      ? "bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+                      : "bg-primary hover:bg-[#15bfae] text-[#0B132B] shadow-[0_0_15px_rgba(24,216,197,0.3)] hover:shadow-[0_0_20px_rgba(24,216,197,0.5)]"
+                  }`}
+                >
+                  <span
+                    className={`material-symbols-outlined text-[18px] ${
+                      isUpdating ? "animate-spin" : ""
+                    }`}
+                  >
+                    {isSynced ? "check" : "sync"}
+                  </span>
+                  {isUpdating ? "Syncing..." : isSynced ? "Synced" : "Update Rate"}
+                </button>
+              </div>
             </div>
           </div>
-          <span className="text-[11px] font-semibold text-emerald-700 mt-3 flex items-center">
-            <svg className="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-            </svg>
-            +₹{data.rateDelta.toLocaleString("en-IN")} (+{data.rateDeltaPct}%) Premium
-          </span>
-        </div>
-
-        {/* Projected RevPAR Lift */}
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs flex flex-col justify-between">
-          <div>
-            <span className="text-[11px] uppercase font-bold text-gray-400 tracking-wider">
-              Projected RevPAR Lift
-            </span>
-            <div className="flex items-baseline space-x-2 mt-2">
-              <span className="text-3xl font-extrabold font-mono text-blue-600">
-                +{data.projectedRevparLiftPct}%
-              </span>
-              <span className="text-xs text-blue-600 font-medium">yield surge</span>
-            </div>
-          </div>
-          <span className="text-[11px] text-gray-500 mt-3 flex items-center">
-            <span className="w-2 h-2 rounded-full bg-blue-500 mr-1.5"></span>
-            Kaplan-Meier unconstrained demand model
-          </span>
-        </div>
-      </div>
-
-      {/* 3. COMPARATIVE PACE VELOCITY CHART (RECHARTS) */}
-      <div className="p-6 sm:p-8 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-bold text-gray-900 tracking-tight">
-              Booking Pace Velocity: Current Trajectory vs. Optimized Booking Curve
-            </h3>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Visualizes room pickup speed (% occupancy velocity) across lead times leading up to check-in.
-            </p>
-          </div>
-          <div className="flex items-center space-x-4 text-xs">
-            <span className="flex items-center text-gray-600">
-              <span className="w-3 h-3 rounded-xs bg-gray-400 mr-1.5"></span>
-              Current Trajectory
-            </span>
-            <span className="flex items-center text-emerald-700 font-semibold">
-              <span className="w-3 h-3 rounded-xs bg-emerald-500 mr-1.5"></span>
-              Optimized Curve (Surge Strategy)
-            </span>
-          </div>
-        </div>
-
-        <div className="h-64 w-full bg-gray-50/40 rounded-xl p-3 border border-gray-200/60">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data.paceCurve} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="currentPace" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#94a3b8" stopOpacity={0.0} />
-                </linearGradient>
-                <linearGradient id="optimizedPace" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.5} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="daysOut" stroke="#94a3b8" fontSize={11} tickLine={false} />
-              <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} domain={[0, 100]} unit="%" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#0f172a",
-                  borderRadius: "8px",
-                  color: "#fff",
-                  fontSize: "12px",
-                  border: "none",
-                }}
-                formatter={(value: unknown, name: unknown) => [
-                  `${String(value)}% Occupancy Velocity`,
-                  String(name) === "currentVelocity" ? "Current Trajectory" : "Optimized Curve",
-                ]}
-              />
-              <Area
-                type="monotone"
-                dataKey="currentVelocity"
-                stroke="#64748b"
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#currentPace)"
-              />
-              <Area
-                type="monotone"
-                dataKey="optimizedCurve"
-                stroke="#10b981"
-                strokeWidth={3}
-                fillOpacity={1}
-                fill="url(#optimizedPace)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* 4. GLOWING GREEN UPDATE RATE ACTION BAR */}
-      <div className="px-6 py-5 sm:px-8 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center space-x-3 text-xs text-gray-500">
-          <svg className="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          <span>
-            Executes Neon PL/pgSQL Stored Procedure <code className="font-mono text-gray-700 bg-gray-200 px-1 py-0.5 rounded text-[10px]">approve_recommendation({data.id})</code> and updates Channel Manager live.
-          </span>
-        </div>
-
-        <button
-          onClick={handleUpdateRate}
-          disabled={isSyncing || isApproved}
-          className={`w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm tracking-tight transition-all duration-200 flex items-center justify-center space-x-2.5 cursor-pointer shadow-lg ${
-            isApproved
-              ? "bg-emerald-600 text-white cursor-default shadow-emerald-500/20"
-              : isSyncing
-              ? "bg-emerald-500 text-white opacity-80 cursor-wait"
-              : "bg-[#10B981] hover:bg-[#059669] text-white shadow-emerald-500/40 hover:shadow-emerald-500/60 hover:-translate-y-0.5 active:translate-y-0"
-          }`}
-          style={
-            !isApproved && !isSyncing
-              ? {
-                  boxShadow: "0 0 25px rgba(16, 185, 129, 0.55), 0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                }
-              : {}
-          }
-        >
-          {isApproved ? (
-            <>
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Rates Live Across OTAs</span>
-            </>
-          ) : isSyncing ? (
-            <>
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-              <span>Executing OTA Sync Pipeline...</span>
-            </>
-          ) : (
-            <>
-              <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
-              <span>Update Rate to ₹{data.recommendedRate.toLocaleString("en-IN")}</span>
-            </>
-          )}
-        </button>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }
