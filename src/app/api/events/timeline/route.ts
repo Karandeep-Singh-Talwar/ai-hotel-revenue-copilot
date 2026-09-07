@@ -21,64 +21,64 @@ function computeHaversineKm(lat1: number, lon1: number, lat2: number, lon2: numb
 }
 
 export async function GET() {
-  // Default hotel location (The Claridges New Delhi)
-  const hotelLat = 28.5998;
-  const hotelLng = 77.2185;
+  // Lemon Tree Premier, Delhi Airport (Aerocity) location
+  const hotelLat = 28.5505;
+  const hotelLng = 77.1215;
 
   const today = new Date();
 
   const eventsData = [
     {
       id: 1,
-      name: "Global AI & Cloud Tech Expo 2026",
+      name: "Aviation India Expo & Trade Summit",
       eventDate: new Date(today.getTime() + 7 * 86400000).toISOString().split("T")[0],
-      venueName: "Bharat Mandapam (Pragati Maidan)",
-      lat: 28.6184,
-      lng: 77.2415,
-      expectedAttendance: 42000,
-      category: "Tech Exhibition / Conference",
-      surgePercentage: 24,
-      surgeBadge: "⚡ +24% Projected Demand",
-      description: "Major B2B convergence bringing international technology executives to Central Delhi.",
+      venueName: "Yashobhoomi IICC, Dwarka (Sector 25)",
+      lat: 28.5524,
+      lng: 77.0583,
+      expectedAttendance: 48000,
+      category: "Aviation & Aerospace Trade Expo",
+      surgePercentage: 42,
+      surgeBadge: "⚡ +42% Projected Demand",
+      description: "Major international aviation summit driving massive corporate room blocks into Aerocity.",
     },
     {
       id: 2,
-      name: "Ed Sheeran + Coldplay Stadium Live Tour",
-      eventDate: new Date(today.getTime() + 14 * 86400000).toISOString().split("T")[0],
-      venueName: "Jawaharlal Nehru Stadium",
-      lat: 28.5828,
-      lng: 77.2344,
-      expectedAttendance: 58000,
-      category: "Music Concert",
-      surgePercentage: 38,
-      surgeBadge: "⚡ +38% Projected Demand",
-      description: "High leisure compression across South & Central Delhi. Immediate sold-out weekend.",
+      name: "IGI Airport Weekend Transit Peak",
+      eventDate: new Date(today.getTime() + 11 * 86400000).toISOString().split("T")[0],
+      venueName: "IGI Airport Terminal 3 (Aerocity Corridor)",
+      lat: 28.5562,
+      lng: 77.0855,
+      expectedAttendance: 35000,
+      category: "Aviation Transit Surge",
+      surgePercentage: 32,
+      surgeBadge: "⚡ +32% Projected Demand",
+      description: "Holiday transit passenger surge with layovers and business travel along Terminal 3.",
     },
     {
       id: 3,
-      name: "Indo-Global Medical Devices Summit",
-      eventDate: new Date(today.getTime() + 21 * 86400000).toISOString().split("T")[0],
-      venueName: "Yashobhoomi Convention Centre (IICC Dwarka)",
+      name: "Global EV & Clean Mobility Summit",
+      eventDate: new Date(today.getTime() + 15 * 86400000).toISOString().split("T")[0],
+      venueName: "Yashobhoomi Convention Centre, Dwarka",
       lat: 28.5524,
       lng: 77.0583,
-      expectedAttendance: 28000,
-      category: "Healthcare Expo",
-      surgePercentage: 18,
-      surgeBadge: "⚡ +18% Projected Demand",
-      description: "Pharma and surgical supply chain summit driving multi-night corporate room blocks.",
+      expectedAttendance: 52000,
+      category: "Automotive & EV Expo",
+      surgePercentage: 38,
+      surgeBadge: "⚡ +38% Projected Demand",
+      description: "Clean mobility and automotive summit creating strong demand for business hotels in Aerocity.",
     },
     {
       id: 4,
-      name: "Auto Expo Bharat Mobility Summit",
-      eventDate: new Date(today.getTime() + 28 * 86400000).toISOString().split("T")[0],
-      venueName: "Bharat Mandapam (Pragati Maidan)",
-      lat: 28.6184,
-      lng: 77.2415,
-      expectedAttendance: 68000,
-      category: "Automotive Trade Fair",
-      surgePercentage: 32,
-      surgeBadge: "⚡ +32% Projected Demand",
-      description: "Massive automotive showcase generating high-yield VIP delegations and corporate stays.",
+      name: "Coldplay Live Tour 2026",
+      eventDate: new Date(today.getTime() + 21 * 86400000).toISOString().split("T")[0],
+      venueName: "Jawaharlal Nehru Stadium (via NH-48)",
+      lat: 28.5828,
+      lng: 77.2344,
+      expectedAttendance: 65000,
+      category: "Music Concert",
+      surgePercentage: 25,
+      surgeBadge: "⚡ +25% Projected Demand",
+      description: "High leisure inflow across NCR with travelers booking hotels near airport expressway.",
     },
   ];
 
@@ -89,12 +89,12 @@ export async function GET() {
       ...event,
       distanceKm: distKm,
       distanceMiles: distMiles,
-      distanceFormatted: `${distMiles} miles (${distKm} km) away`,
+      distanceFormatted: `${distKm} km (${distMiles} miles) away`,
     };
   });
 
   return NextResponse.json({
-    hotel: "The Claridges New Delhi",
+    hotel: "Lemon Tree Premier, Delhi Airport (Aerocity)",
     events: enrichedEvents,
     count: enrichedEvents.length,
     timestamp: new Date().toISOString(),

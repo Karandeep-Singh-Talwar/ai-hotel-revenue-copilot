@@ -242,6 +242,7 @@ export default function HotelRevenueDashboard() {
             <EventTimeline
               onGeneratePricing={handleEventPricingJump}
               onSelectEvent={(evt) => console.log("Selected event:", evt)}
+              onCompetitorToggled={(msg) => addToast("Comp-Set Updated", msg)}
             />
           </div>
         )}

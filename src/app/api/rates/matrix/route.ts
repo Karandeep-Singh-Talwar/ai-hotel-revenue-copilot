@@ -102,6 +102,83 @@ export async function GET(req: NextRequest) {
         Agoda: { rate: Math.round(4550 * multiplier), rawRoom: "Standard Room" },
       },
     },
+    {
+      id: 106,
+      name: "JW Marriott Hotel Aerocity",
+      starRating: 5,
+      reviewScore: 9.3,
+      channels: {
+        MakeMyTrip: { rate: Math.round(14500 * multiplier), rawRoom: "Deluxe King Guest Room" },
+        "Booking.com": { rate: Math.round(14850 * multiplier), rawRoom: "Deluxe Room" },
+        Agoda: { rate: Math.round(14200 * multiplier), rawRoom: "Deluxe King" },
+      },
+    },
+    {
+      id: 107,
+      name: "Roseate House New Delhi",
+      starRating: 5,
+      reviewScore: 9.0,
+      channels: {
+        MakeMyTrip: { rate: Math.round(13200 * multiplier), rawRoom: "Deluxe Room" },
+        "Booking.com": { rate: Math.round(13600 * multiplier), rawRoom: "Premium Room" },
+        Agoda: { rate: Math.round(13100 * multiplier), rawRoom: "Deluxe Double" },
+      },
+    },
+    {
+      id: 108,
+      name: "Andaz Delhi (by Hyatt)",
+      starRating: 5,
+      reviewScore: 9.1,
+      channels: {
+        MakeMyTrip: { rate: Math.round(12900 * multiplier), rawRoom: "1 King Bed" },
+        "Booking.com": { rate: Math.round(13300 * multiplier), rawRoom: "Standard King" },
+        Agoda: { rate: Math.round(12750 * multiplier), rawRoom: "1 King Bed Runway View" },
+      },
+    },
+    {
+      id: 109,
+      name: "Pride Plaza Hotel Aerocity",
+      starRating: 5,
+      reviewScore: 8.4,
+      channels: {
+        MakeMyTrip: { rate: Math.round(6400 * multiplier), rawRoom: "Deluxe Room" },
+        "Booking.com": { rate: Math.round(6650 * multiplier), rawRoom: "Superior Room" },
+        Agoda: { rate: Math.round(6350 * multiplier), rawRoom: "Deluxe Room" },
+      },
+    },
+    {
+      id: 110,
+      name: "Radisson Blu Plaza Delhi Airport",
+      starRating: 5,
+      reviewScore: 8.7,
+      channels: {
+        MakeMyTrip: { rate: Math.round(8100 * multiplier), rawRoom: "Superior Room" },
+        "Booking.com": { rate: Math.round(8350 * multiplier), rawRoom: "Standard Room" },
+        Agoda: { rate: Math.round(8000 * multiplier), rawRoom: "Superior King" },
+      },
+    },
+    {
+      id: 111,
+      name: "Four Points by Sheraton Airport",
+      starRating: 4,
+      reviewScore: 8.3,
+      channels: {
+        MakeMyTrip: { rate: Math.round(5900 * multiplier), rawRoom: "Comfort Room" },
+        "Booking.com": { rate: Math.round(6100 * multiplier), rawRoom: "Standard Queen" },
+        Agoda: { rate: Math.round(5850 * multiplier), rawRoom: "Comfort King" },
+      },
+    },
+    {
+      id: 112,
+      name: "Vivanta New Delhi Dwarka",
+      starRating: 5,
+      reviewScore: 8.8,
+      channels: {
+        MakeMyTrip: { rate: Math.round(7600 * multiplier), rawRoom: "Superior Room" },
+        "Booking.com": { rate: Math.round(7850 * multiplier), rawRoom: "Deluxe Room" },
+        Agoda: { rate: Math.round(7500 * multiplier), rawRoom: "Superior City View" },
+      },
+    },
   ];
 
   return NextResponse.json({

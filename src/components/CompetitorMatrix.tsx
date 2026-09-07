@@ -29,13 +29,46 @@ interface CompetitorMatrixProps {
   onBack?: () => void;
 }
 
-const AEROCITY_COMPETITOR_NAMES = [
-  "Aloft Aerocity",
-  "Holiday Inn Aerocity",
-  "Novotel Aerocity",
-  "Pullman Aerocity",
-  "Ibis Aerocity",
+export interface NearbyCompHotel {
+  id: number;
+  name: string;
+  fullName: string;
+  stars: number;
+  distanceKm: number;
+  rate: number;
+  defaultInSet: boolean;
+}
+
+export const ALL_NEARBY_AEROCITY_HOTELS: NearbyCompHotel[] = [
+  { id: 101, name: "Aloft Aerocity", fullName: "Aloft New Delhi Aerocity", stars: 5, distanceKm: 0.2, rate: 8400, defaultInSet: true },
+  { id: 102, name: "Holiday Inn Aerocity", fullName: "Holiday Inn Express Aerocity", stars: 4, distanceKm: 0.3, rate: 6900, defaultInSet: true },
+  { id: 103, name: "Novotel Aerocity", fullName: "Novotel New Delhi Aerocity", stars: 5, distanceKm: 0.2, rate: 9200, defaultInSet: true },
+  { id: 104, name: "Pullman Aerocity", fullName: "Pullman New Delhi Aerocity", stars: 5, distanceKm: 0.2, rate: 12800, defaultInSet: true },
+  { id: 105, name: "Ibis Aerocity", fullName: "Ibis New Delhi Aerocity", stars: 3, distanceKm: 0.3, rate: 4600, defaultInSet: true },
+  { id: 106, name: "JW Marriott Aerocity", fullName: "JW Marriott Hotel New Delhi Aerocity", stars: 5, distanceKm: 0.2, rate: 14500, defaultInSet: false },
+  { id: 107, name: "Roseate House", fullName: "Roseate House New Delhi", stars: 5, distanceKm: 0.3, rate: 13200, defaultInSet: false },
+  { id: 108, name: "Andaz Delhi", fullName: "Andaz Delhi (by Hyatt)", stars: 5, distanceKm: 0.4, rate: 12900, defaultInSet: false },
+  { id: 109, name: "Pride Plaza Aerocity", fullName: "Pride Plaza Hotel Aerocity", stars: 5, distanceKm: 0.4, rate: 6400, defaultInSet: false },
+  { id: 110, name: "Radisson Blu Airport", fullName: "Radisson Blu Plaza Delhi Airport", stars: 5, distanceKm: 1.1, rate: 8100, defaultInSet: false },
+  { id: 111, name: "Four Points Airport", fullName: "Four Points by Sheraton Delhi Airport", stars: 4, distanceKm: 2.5, rate: 5900, defaultInSet: false },
+  { id: 112, name: "Vivanta Dwarka", fullName: "Vivanta New Delhi, Dwarka", stars: 5, distanceKm: 6.8, rate: 7600, defaultInSet: false },
 ];
+
+const getShortName = (fullName: string): string => {
+  if (fullName.includes("Aloft")) return "Aloft Aerocity";
+  if (fullName.includes("Holiday")) return "Holiday Inn Aerocity";
+  if (fullName.includes("Novotel")) return "Novotel Aerocity";
+  if (fullName.includes("Pullman")) return "Pullman Aerocity";
+  if (fullName.includes("Ibis")) return "Ibis Aerocity";
+  if (fullName.includes("JW Marriott") || fullName.includes("Marriott")) return "JW Marriott Aerocity";
+  if (fullName.includes("Roseate")) return "Roseate House";
+  if (fullName.includes("Andaz")) return "Andaz Delhi";
+  if (fullName.includes("Pride Plaza")) return "Pride Plaza Aerocity";
+  if (fullName.includes("Radisson")) return "Radisson Blu Airport";
+  if (fullName.includes("Four Points")) return "Four Points Airport";
+  if (fullName.includes("Vivanta")) return "Vivanta Dwarka";
+  return fullName;
+};
 
 const ROOM_CATEGORIES = [
   { id: "superior", name: "Superior Room", basePrice: 5800, multiplier: 1.0 },
@@ -47,6 +80,17 @@ const ROOM_CATEGORIES = [
 export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMatrixProps) {
   const [selectedOta, setSelectedOta] = useState<string>("MakeMyTrip");
   const [selectedRoomCategory, setSelectedRoomCategory] = useState<string>("superior");
+  const [activeCompetitors, setActiveCompetitors] = useState<string[]>([
+    "Aloft Aerocity",
+    "Holiday Inn Aerocity",
+    "Novotel Aerocity",
+    "Pullman Aerocity",
+    "Ibis Aerocity",
+  ]);
+  const [showCompSetModal, setShowCompSetModal] = useState<boolean>(false);
+  const [compSearch, setCompSearch] = useState<string>("");
+  const [compRadius, setCompRadius] = useState<number>(5);
+
   const [matrixData, setMatrixData] = useState<CompetitorRateCell[]>([]);
   const [selectedCell, setSelectedCell] = useState<{
     date: string;
@@ -65,7 +109,7 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
 
   useEffect(() => {
     fetchMatrixData();
-  }, [selectedOta, selectedRoomCategory]);
+  }, [selectedOta, selectedRoomCategory, activeCompetitors]);
 
   const fetchMatrixData = async () => {
     try {
@@ -86,15 +130,7 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
             let baseRate = ch ? ch.rate : 8400;
             if (isWeekend) baseRate = Math.round(baseRate * 1.12);
 
-            const shortName = c.name.includes("Aloft")
-              ? "Aloft Aerocity"
-              : c.name.includes("Holiday")
-              ? "Holiday Inn Aerocity"
-              : c.name.includes("Novotel")
-              ? "Novotel Aerocity"
-              : c.name.includes("Pullman")
-              ? "Pullman Aerocity"
-              : "Ibis Aerocity";
+            const shortName = getShortName(c.name);
 
             const delta = baseRate - myRate;
             competitorsMap[shortName] = {
@@ -122,12 +158,13 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
         // Set default selected cell
         if (rows.length > 0 && !selectedCell) {
           const firstRow = rows[0];
+          const firstCompName = activeCompetitors[0] || "Aloft Aerocity";
           setSelectedCell({
             date: firstRow.date,
-            competitor: "Aloft Aerocity",
-            theirRate: firstRow.competitors["Aloft Aerocity"]?.rate || 8400,
+            competitor: firstCompName,
+            theirRate: firstRow.competitors[firstCompName]?.rate || 8400,
             myRate: firstRow.myRate,
-            delta: (firstRow.competitors["Aloft Aerocity"]?.rate || 8400) - firstRow.myRate,
+            delta: (firstRow.competitors[firstCompName]?.rate || 8400) - firstRow.myRate,
           });
         }
       }
@@ -189,13 +226,13 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
   const handleExportCsv = () => {
     const csvContent =
       `Date,Lemon Tree Aerocity (${currentCategory.name}),` +
-      AEROCITY_COMPETITOR_NAMES.join(",") +
+      activeCompetitors.join(",") +
       "\n" +
       matrixData
         .map(
           (row) =>
             `${row.date},${row.myRate},` +
-            AEROCITY_COMPETITOR_NAMES.map((c) => row.competitors[c]?.rate || "").join(",")
+            activeCompetitors.map((c) => row.competitors[c]?.rate || "").join(",")
         )
         .join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -206,6 +243,43 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleToggleCompetitor = async (hotel: NearbyCompHotel) => {
+    const isInSet = activeCompetitors.includes(hotel.name);
+    let nextComps: string[];
+    if (isInSet) {
+      if (activeCompetitors.length <= 1) {
+        if (onRateUpdated) onRateUpdated("You must keep at least 1 competitor in your comp-set.");
+        return;
+      }
+      nextComps = activeCompetitors.filter((c) => c !== hotel.name);
+    } else {
+      nextComps = [...activeCompetitors, hotel.name];
+    }
+    setActiveCompetitors(nextComps);
+
+    try {
+      const ids = ALL_NEARBY_AEROCITY_HOTELS.filter((h) => nextComps.includes(h.name)).map((h) => h.id);
+      await fetch("/api/comp-set/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hotelId: 1,
+          competitorIds: ids,
+        }),
+      });
+    } catch (err) {
+      console.error("CompSet update failed:", err);
+    }
+
+    if (onRateUpdated) {
+      onRateUpdated(
+        isInSet
+          ? `${hotel.name} removed from your Aerocity comp-set.`
+          : `${hotel.name} added to your Aerocity comp-set! Price columns updated.`
+      );
+    }
   };
 
   const historyData = [
@@ -241,6 +315,19 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Add Nearby Hotel / Comp-Set Manager Button */}
+          <button
+            onClick={() => setShowCompSetModal(true)}
+            className="flex items-center gap-1.5 h-8 px-3.5 bg-primary hover:bg-[#15bfae] text-[#0B132B] font-bold rounded text-xs font-mono transition-all shadow-[0_0_12px_rgba(46,196,182,0.3)] cursor-pointer"
+            title="Add or remove nearby Aerocity competitors from your monitoring set"
+          >
+            <span className="material-symbols-outlined text-[16px]">add_circle</span>
+            <span>+ Add Nearby Hotel</span>
+            <span className="bg-[#0B132B] text-primary px-1.5 py-0.2 rounded text-[10px]">
+              {activeCompetitors.length} in set
+            </span>
+          </button>
+
           <button
             onClick={handleSyncRates}
             disabled={isSyncing}
@@ -342,7 +429,7 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
                   <th className="p-3 font-semibold text-white bg-matrix-hover min-w-[180px] border-b-2 border-b-primary shadow-[4px_0_12px_rgba(0,0,0,0.5)] sticky left-[100px] z-30">
                     Lemon Tree ({currentCategory.name})
                   </th>
-                  {AEROCITY_COMPETITOR_NAMES.map((name) => (
+                  {activeCompetitors.map((name) => (
                     <th
                       key={name}
                       className="p-3 font-semibold text-matrix-muted min-w-[135px] border-b-2 border-b-[#3A506B] bg-[#1C2541]"
@@ -366,7 +453,7 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
                     >
                       ₹{row.myRate.toLocaleString("en-IN")}
                     </td>
-                    {AEROCITY_COMPETITOR_NAMES.map((compName) => {
+                    {activeCompetitors.map((compName) => {
                       const compData = row.competitors[compName];
                       if (!compData) {
                         return (
@@ -528,6 +615,167 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
           </aside>
         )}
       </main>
+
+      {/* Aerocity Comp-Set Management Modal */}
+      {showCompSetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="bg-[#111827] border border-[#3A506B] rounded-lg shadow-[0_15px_50px_rgba(0,0,0,0.9)] w-full max-w-3xl overflow-hidden flex flex-col max-h-[85vh]">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-[#3A506B] flex items-center justify-between bg-[#1C2541]">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
+                  <span className="material-symbols-outlined text-[20px]">domain_add</span>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-heading">
+                    Aerocity Comp-Set Management
+                  </h3>
+                  <p className="text-xs text-muted font-mono">
+                    Select nearby hotels to track in your 14-day price comparison grid
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCompSetModal(false)}
+                className="w-8 h-8 rounded hover:bg-[#2A375C] text-muted hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            {/* Filter Toolbar: Search & Distance Radius */}
+            <div className="p-4 border-b border-[#3A506B] bg-[#0E1526] flex flex-wrap items-center justify-between gap-3">
+              {/* Search Bar */}
+              <div className="flex items-center gap-2 bg-[#1C2541] border border-[#3A506B] rounded px-3 py-1.5 flex-1 min-w-[200px]">
+                <span className="material-symbols-outlined text-muted text-[16px]">search</span>
+                <input
+                  type="text"
+                  value={compSearch}
+                  onChange={(e) => setCompSearch(e.target.value)}
+                  placeholder="Search nearby Aerocity hotel..."
+                  className="bg-transparent text-white text-xs font-mono focus:outline-none w-full placeholder:text-muted"
+                />
+                {compSearch && (
+                  <button onClick={() => setCompSearch("")} className="text-muted hover:text-white">
+                    <span className="material-symbols-outlined text-[14px]">close</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Distance Radius Filter */}
+              <div className="flex items-center gap-1 font-mono text-xs text-muted">
+                <span className="text-[11px] uppercase font-bold mr-1">Within:</span>
+                {[1, 3, 5, 10].map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setCompRadius(r)}
+                    className={`px-2 py-1 rounded text-xs transition-colors cursor-pointer ${
+                      compRadius === r
+                        ? "bg-primary text-[#0B132B] font-bold"
+                        : "bg-[#1C2541] text-muted hover:text-white border border-[#3A506B]"
+                    }`}
+                  >
+                    {r}km
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Hotel Cards List */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-[#0B132B]">
+              {ALL_NEARBY_AEROCITY_HOTELS
+                .filter(
+                  (h) =>
+                    h.distanceKm <= compRadius &&
+                    (compSearch === "" ||
+                      h.name.toLowerCase().includes(compSearch.toLowerCase()) ||
+                      h.fullName.toLowerCase().includes(compSearch.toLowerCase()))
+                )
+                .map((hotel) => {
+                  const isInSet = activeCompetitors.includes(hotel.name);
+                  return (
+                    <div
+                      key={hotel.id}
+                      className={`p-3.5 rounded border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        isInSet
+                          ? "bg-[#1C2541]/90 border-amber-400/50 shadow-md"
+                          : "bg-[#141d33] border-[#3A506B] hover:border-slate-500"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div
+                          className={`w-9 h-9 rounded flex items-center justify-center shrink-0 mt-0.5 ${
+                            isInSet
+                              ? "bg-amber-400/15 text-amber-300 border border-amber-400/30"
+                              : "bg-purple-500/15 text-purple-300 border border-purple-500/30"
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-[18px]">domain</span>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-heading text-sm font-bold text-white">
+                              {hotel.name}
+                            </h4>
+                            {isInSet ? (
+                              <span className="bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded uppercase">
+                                Tracking in Matrix
+                              </span>
+                            ) : (
+                              <span className="bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded uppercase">
+                                Available
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted font-mono">{hotel.fullName}</p>
+                          <div className="flex items-center gap-3 mt-1 text-[11px] font-mono text-muted">
+                            <span className="text-amber-400">{"★".repeat(hotel.stars)}</span>
+                            <span>•</span>
+                            <span className="text-slate-300">{hotel.distanceKm} km from Lemon Tree</span>
+                            <span>•</span>
+                            <span className="text-primary font-bold">~₹{hotel.rate.toLocaleString("en-IN")}/night</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Button */}
+                      <button
+                        onClick={() => handleToggleCompetitor(hotel)}
+                        className={`px-3.5 py-1.5 rounded text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shrink-0 ${
+                          isInSet
+                            ? "bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white border border-red-500/40"
+                            : "bg-primary hover:bg-[#15bfae] text-[#0B132B] shadow-[0_0_12px_rgba(46,196,182,0.3)]"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">
+                          {isInSet ? "remove_circle" : "add_circle"}
+                        </span>
+                        <span>{isInSet ? "Remove from Set" : "+ Add to Comp-Set"}</span>
+                      </button>
+                    </div>
+                  );
+                })}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-[#3A506B] bg-[#1C2541] flex items-center justify-between">
+              <div className="font-mono text-xs text-muted flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                <span>
+                  Tracking <strong className="text-white">{activeCompetitors.length}</strong> of{" "}
+                  {ALL_NEARBY_AEROCITY_HOTELS.length} nearby hotels
+                </span>
+              </div>
+              <button
+                onClick={() => setShowCompSetModal(false)}
+                className="px-5 py-2 bg-primary hover:bg-[#15bfae] text-[#0B132B] font-mono text-xs font-bold rounded cursor-pointer transition-colors shadow-md"
+              >
+                Done / View Matrix
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

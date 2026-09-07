@@ -51,6 +51,21 @@ export interface MapCompetitor {
   isUndercut?: boolean;
 }
 
+export interface NearbyHotel {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  address: string;
+  rate: number;
+  stars: number;
+  ota: string;
+  status: string;
+  isUndercut?: boolean;
+  inCompSet: boolean;
+  distanceKm?: number;
+}
+
 export interface MapEvent {
   id: string;
   name: string;
@@ -84,7 +99,8 @@ export const DEFAULT_PROPERTIES: MapHotel[] = [
   },
 ];
 
-export const DEFAULT_COMPETITORS: MapCompetitor[] = [
+export const DEFAULT_NEARBY_HOTELS: NearbyHotel[] = [
+  // 1. In Comp-Set
   {
     id: "aloft",
     name: "Aloft New Delhi Aerocity",
@@ -92,9 +108,11 @@ export const DEFAULT_COMPETITORS: MapCompetitor[] = [
     lng: 77.1230,
     address: "5B Hospitality District, Aerocity",
     rate: 8400,
+    stars: 5,
     ota: "MakeMyTrip",
     status: "Price Raised (+12%)",
     isUndercut: false,
+    inCompSet: true,
   },
   {
     id: "holiday_inn",
@@ -103,9 +121,11 @@ export const DEFAULT_COMPETITORS: MapCompetitor[] = [
     lng: 77.1205,
     address: "Asset Area 12, Aerocity",
     rate: 6900,
+    stars: 4,
     ota: "Booking.com",
     status: "Price Raised (+8%)",
     isUndercut: false,
+    inCompSet: true,
   },
   {
     id: "novotel",
@@ -114,9 +134,11 @@ export const DEFAULT_COMPETITORS: MapCompetitor[] = [
     lng: 77.1225,
     address: "Asset No 2, Aerocity",
     rate: 9200,
+    stars: 5,
     ota: "Agoda",
     status: "High Demand (+15%)",
     isUndercut: false,
+    inCompSet: true,
   },
   {
     id: "pullman",
@@ -125,9 +147,11 @@ export const DEFAULT_COMPETITORS: MapCompetitor[] = [
     lng: 77.1220,
     address: "Asset No 2, Aerocity",
     rate: 12800,
+    stars: 5,
     ota: "MakeMyTrip",
     status: "High Demand (+10%)",
     isUndercut: false,
+    inCompSet: true,
   },
   {
     id: "ibis",
@@ -136,11 +160,119 @@ export const DEFAULT_COMPETITORS: MapCompetitor[] = [
     lng: 77.1235,
     address: "Asset No 9, Aerocity",
     rate: 4600,
+    stars: 3,
     ota: "MakeMyTrip",
     status: "Steady Price (0%)",
     isUndercut: true,
+    inCompSet: true,
+  },
+  // 2. Nearby Hotels available to ADD to Comp-Set
+  {
+    id: "jw_marriott",
+    name: "JW Marriott Hotel New Delhi Aerocity",
+    lat: 28.5518,
+    lng: 77.1210,
+    address: "Asset Area 4 - Hospitality District, Aerocity",
+    rate: 14500,
+    stars: 5,
+    ota: "MakeMyTrip",
+    status: "High Demand (+14%)",
+    isUndercut: false,
+    inCompSet: false,
+  },
+  {
+    id: "roseate_house",
+    name: "Roseate House New Delhi",
+    lat: 28.5500,
+    lng: 77.1198,
+    address: "Asset 10, Hospitality District, Aerocity",
+    rate: 13200,
+    stars: 5,
+    ota: "Booking.com",
+    status: "Steady (+2%)",
+    isUndercut: false,
+    inCompSet: false,
+  },
+  {
+    id: "andaz_delhi",
+    name: "Andaz Delhi (by Hyatt)",
+    lat: 28.5532,
+    lng: 77.1218,
+    address: "Asset No.1, Northern Access Rd, Aerocity",
+    rate: 12900,
+    stars: 5,
+    ota: "Agoda",
+    status: "High Demand (+9%)",
+    isUndercut: false,
+    inCompSet: false,
+  },
+  {
+    id: "pride_plaza",
+    name: "Pride Plaza Hotel Aerocity",
+    lat: 28.5482,
+    lng: 77.1242,
+    address: "Asset 5A, Hospitality District, Aerocity",
+    rate: 6400,
+    stars: 5,
+    ota: "MakeMyTrip",
+    status: "Similar Price (+4%)",
+    isUndercut: false,
+    inCompSet: false,
+  },
+  {
+    id: "radisson_blu",
+    name: "Radisson Blu Plaza Delhi Airport",
+    lat: 28.5448,
+    lng: 77.1292,
+    address: "NH-48, near Delhi Airport, Mahipalpur",
+    rate: 8100,
+    stars: 5,
+    ota: "Booking.com",
+    status: "Price Raised (+6%)",
+    isUndercut: false,
+    inCompSet: false,
+  },
+  {
+    id: "four_points",
+    name: "Four Points by Sheraton Delhi Airport",
+    lat: 28.5320,
+    lng: 77.1080,
+    address: "Plot No 9, National Highway - 8, Samalka",
+    rate: 5900,
+    stars: 4,
+    ota: "Agoda",
+    status: "Steady Price (0%)",
+    isUndercut: false,
+    inCompSet: false,
+  },
+  {
+    id: "vivanta_dwarka",
+    name: "Vivanta New Delhi, Dwarka",
+    lat: 28.5830,
+    lng: 77.0620,
+    address: "Near Sector 21 Metro, Dwarka (near Yashobhoomi)",
+    rate: 7600,
+    stars: 5,
+    ota: "MakeMyTrip",
+    status: "High Demand (+18%)",
+    isUndercut: false,
+    inCompSet: false,
   },
 ];
+
+export const DEFAULT_COMPETITORS: MapCompetitor[] = DEFAULT_NEARBY_HOTELS.filter(
+  (h) => h.inCompSet
+).map((h) => ({
+  id: h.id,
+  name: h.name,
+  lat: h.lat,
+  lng: h.lng,
+  address: h.address,
+  rate: h.rate,
+  ota: h.ota,
+  status: h.status,
+  isUndercut: h.isUndercut,
+}));
 
 export const DEFAULT_EVENTS: MapEvent[] = [
   {
@@ -197,13 +329,16 @@ export const DEFAULT_EVENTS: MapEvent[] = [
   },
 ];
 
-interface TacticalDarkMapProps {
+export interface TacticalDarkMapProps {
   center?: [number, number];
   zoom?: number;
   focusedLocation?: { lat: number; lng: number; zoom?: number; id?: string } | null;
   activeEventId?: string | null;
   properties?: MapHotel[];
   competitors?: MapCompetitor[];
+  nearbyHotels?: NearbyHotel[];
+  selectedCompetitors?: string[];
+  onToggleCompetitor?: (hotel: NearbyHotel) => void;
   events?: MapEvent[];
   showControls?: boolean;
   showFilters?: boolean;
@@ -211,6 +346,21 @@ interface TacticalDarkMapProps {
   onNavigateToTab?: (tab: "overview" | "matrix" | "ai_actions" | "events", targetId?: string) => void;
   onQuickReview?: (actionId: string) => void;
   onSelectEvent?: (event: MapEvent) => void;
+}
+
+// Haversine distance calculator
+function computeDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
 }
 
 // Controller component to handle map flying and size invalidation
@@ -226,7 +376,6 @@ function MapController({
   const map = useMap();
 
   useEffect(() => {
-    // Invalidate size on mount & container resize
     const timer = setTimeout(() => {
       map.invalidateSize();
     }, 150);
@@ -271,7 +420,7 @@ function MapControlButtons({
         <span className="material-symbols-outlined text-[18px]">remove</span>
       </button>
       <button
-        onClick={() => map.flyTo(defaultCenter, 13, { duration: 1.2 })}
+        onClick={() => map.flyTo(defaultCenter, 14, { duration: 1.2 })}
         title="Center Aerocity Delhi"
         className="w-8 h-8 bg-surface/95 border border-[#3A506B] rounded flex items-center justify-center text-primary hover:bg-[#2A375C] hover:border-primary transition-all shadow-xl active:scale-95 cursor-pointer"
       >
@@ -283,11 +432,13 @@ function MapControlButtons({
 
 export default function TacticalDarkMap({
   center = [28.5505, 77.1215], // Aerocity Hospitality District, New Delhi
-  zoom = 13,
+  zoom = 14,
   focusedLocation,
   activeEventId,
   properties = DEFAULT_PROPERTIES,
-  competitors = DEFAULT_COMPETITORS,
+  nearbyHotels = DEFAULT_NEARBY_HOTELS,
+  selectedCompetitors,
+  onToggleCompetitor,
   events = DEFAULT_EVENTS,
   showControls = true,
   showFilters = true,
@@ -299,8 +450,34 @@ export default function TacticalDarkMap({
   // Layer Toggles
   const [filterHotels, setFilterHotels] = useState(true);
   const [filterCompSet, setFilterCompSet] = useState(true);
+  const [filterNearby, setFilterNearby] = useState(true);
   const [filterEvents, setFilterEvents] = useState(true);
   const [filterRadii, setFilterRadii] = useState(true);
+
+  // Search Radius State (km)
+  const [radiusKm, setRadiusKm] = useState<number>(5);
+
+  // Local state for nearby hotels list (tracks inCompSet status dynamically)
+  const [localHotels, setLocalHotels] = useState<NearbyHotel[]>(nearbyHotels);
+
+  // Synchronize when nearbyHotels prop updates or selectedCompetitors changes
+  useEffect(() => {
+    if (selectedCompetitors && selectedCompetitors.length > 0) {
+      setLocalHotels((prev) =>
+        prev.map((h) => ({
+          ...h,
+          inCompSet: selectedCompetitors.includes(h.name) || selectedCompetitors.includes(h.id),
+        }))
+      );
+    } else {
+      setLocalHotels(nearbyHotels);
+    }
+  }, [nearbyHotels, selectedCompetitors]);
+
+  // Primary Lemon Tree Property coordinates
+  const primaryHotel = useMemo(() => {
+    return properties.find((p) => p.isPrimary) || properties[0];
+  }, [properties]);
 
   // Active event object
   const activeEvent = useMemo(() => {
@@ -308,10 +485,47 @@ export default function TacticalDarkMap({
     return events.find((e) => e.id === activeEventId) || events[0];
   }, [activeEventId, events]);
 
-  // Primary Claridges Property coordinates
-  const primaryClaridges = useMemo(() => {
-    return properties.find((p) => p.isPrimary) || properties[0];
-  }, [properties]);
+  // Toggle comp-set addition/removal
+  const handleToggleHotel = (hotelId: string) => {
+    let toggledHotel: NearbyHotel | undefined;
+    setLocalHotels((prev) =>
+      prev.map((h) => {
+        if (h.id === hotelId) {
+          toggledHotel = { ...h, inCompSet: !h.inCompSet };
+          return toggledHotel;
+        }
+        return h;
+      })
+    );
+
+    if (toggledHotel && onToggleCompetitor) {
+      onToggleCompetitor(toggledHotel);
+    }
+  };
+
+  // Split into inCompSet and nonCompSet with radius filtering
+  const hotelsWithDist = useMemo(() => {
+    const targetLat = primaryHotel?.lat || center[0];
+    const targetLng = primaryHotel?.lng || center[1];
+
+    return localHotels.map((h) => {
+      const dist = computeDistanceKm(targetLat, targetLng, h.lat, h.lng);
+      return {
+        ...h,
+        distanceKm: dist,
+      };
+    });
+  }, [localHotels, primaryHotel, center]);
+
+  const compSetHotels = useMemo(
+    () => hotelsWithDist.filter((h) => h.inCompSet),
+    [hotelsWithDist]
+  );
+
+  const availableNearbyHotels = useMemo(
+    () => hotelsWithDist.filter((h) => !h.inCompSet && (h.distanceKm || 0) <= radiusKm),
+    [hotelsWithDist, radiusKm]
+  );
 
   // Marker Icon Generators
   const createPropertyIcon = (hotel: MapHotel) => {
@@ -322,35 +536,56 @@ export default function TacticalDarkMap({
         <div class="flex flex-col items-center group cursor-pointer -translate-x-1/2 -translate-y-1/2">
           <div class="flex items-center gap-1.5 bg-[#0B132B] border-2 ${
             isSurge ? "border-[#FF9F1C] text-[#FF9F1C] tactical-pulse-amber" : "border-[#2EC4B6] text-[#2EC4B6] tactical-pulse-cyan"
-          } px-2 py-1 rounded shadow-[0_0_16px_rgba(0,0,0,0.9)] transition-transform group-hover:scale-110">
-            <span class="material-symbols-outlined text-[13px] ${isSurge ? 'text-[#FF9F1C]' : 'text-[#2EC4B6]'}">
-              ${isSurge ? 'trending_up' : 'hotel'}
+          } px-2.5 py-1 rounded shadow-[0_0_20px_rgba(46,196,182,0.6)] transition-transform group-hover:scale-110">
+            <span class="material-symbols-outlined text-[14px] ${isSurge ? 'text-[#FF9F1C]' : 'text-[#2EC4B6]'}">
+              hotel
             </span>
-            <span class="font-mono text-[11px] font-bold text-white tracking-tight">₹${hotel.currentRate.toLocaleString('en-IN')}</span>
-            ${isSurge ? '<span class="text-[9px] font-bold text-[#FF9F1C] bg-[#FF9F1C]/15 px-1 rounded">SURGE</span>' : ''}
+            <div class="flex flex-col text-left leading-none">
+              <span class="text-[9px] font-bold text-primary uppercase tracking-tight">Your Hotel</span>
+              <span class="font-mono text-[12px] font-bold text-white tracking-tight">₹${hotel.currentRate.toLocaleString('en-IN')}</span>
+            </div>
           </div>
           <div class="w-2.5 h-2.5 rotate-45 -mt-1 ${isSurge ? 'bg-[#FF9F1C]' : 'bg-[#2EC4B6]'}"></div>
         </div>
       `,
-      iconSize: [110, 48],
-      iconAnchor: [55, 48],
-      popupAnchor: [0, -48],
+      iconSize: [120, 52],
+      iconAnchor: [60, 52],
+      popupAnchor: [0, -52],
     });
   };
 
-  const createCompetitorIcon = (comp: MapCompetitor) => {
+  const createCompetitorIcon = (comp: NearbyHotel) => {
     const isUndercut = comp.isUndercut;
     return L.divIcon({
       className: "custom-tactical-marker",
       html: `
-        <div class="flex flex-col items-center group cursor-pointer -translate-x-1/2 -translate-y-1/2 opacity-90 hover:opacity-100">
+        <div class="flex flex-col items-center group cursor-pointer -translate-x-1/2 -translate-y-1/2 opacity-95 hover:opacity-100">
           <div class="flex items-center gap-1 bg-[#0B132B]/95 border ${
-            isUndercut ? "border-[#E71D36] text-[#E71D36]" : "border-[#3A506B] text-slate-300"
-          } px-1.5 py-0.5 rounded shadow-lg transition-transform group-hover:scale-105">
-            <span class="material-symbols-outlined text-[11px] ${isUndercut ? 'text-[#E71D36]' : 'text-slate-400'}">domain</span>
-            <span class="font-mono text-[10px] text-slate-200">₹${comp.rate.toLocaleString('en-IN')}</span>
+            isUndercut ? "border-[#E71D36] text-[#E71D36]" : "border-[#FF9F1C] text-amber-300"
+          } px-2 py-0.5 rounded shadow-lg transition-transform group-hover:scale-105">
+            <span class="material-symbols-outlined text-[11px] ${isUndercut ? 'text-[#E71D36]' : 'text-[#FF9F1C]'}">domain</span>
+            <span class="font-mono text-[10px] text-slate-100 font-bold">₹${comp.rate.toLocaleString('en-IN')}</span>
+            <span class="text-[8px] font-bold text-amber-400 bg-amber-400/20 px-1 rounded">COMP</span>
           </div>
-          <div class="w-1.5 h-1.5 rotate-45 -mt-0.5 ${isUndercut ? 'bg-[#E71D36]' : 'bg-[#3A506B]'}"></div>
+          <div class="w-1.5 h-1.5 rotate-45 -mt-0.5 ${isUndercut ? 'bg-[#E71D36]' : 'bg-[#FF9F1C]'}"></div>
+        </div>
+      `,
+      iconSize: [95, 34],
+      iconAnchor: [47, 34],
+      popupAnchor: [0, -34],
+    });
+  };
+
+  const createNearbyHotelIcon = (hotel: NearbyHotel) => {
+    return L.divIcon({
+      className: "custom-tactical-marker",
+      html: `
+        <div class="flex flex-col items-center group cursor-pointer -translate-x-1/2 -translate-y-1/2 opacity-85 hover:opacity-100">
+          <div class="flex items-center gap-1 bg-[#1C2541]/95 border border-[#8A2BE2] text-purple-200 px-1.5 py-0.5 rounded shadow-lg transition-transform group-hover:scale-105">
+            <span class="material-symbols-outlined text-[11px] text-[#C084FC]">add_circle</span>
+            <span class="font-mono text-[10px] text-white">₹${hotel.rate.toLocaleString('en-IN')}</span>
+          </div>
+          <div class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-[#8A2BE2]"></div>
         </div>
       `,
       iconSize: [80, 32],
@@ -384,16 +619,17 @@ export default function TacticalDarkMap({
 
   return (
     <div className="relative w-full h-full bg-[#050914] overflow-hidden select-none">
-      {/* Tactical Top Filter Bar */}
+      {/* Tactical Top Filter & Radius Bar */}
       {showFilters && (
         <div className="absolute top-4 left-4 right-4 z-[400] flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-          {/* Tactical Filters */}
-          <div className="flex items-center gap-2 bg-surface/90 backdrop-blur-md border border-[#3A506B] px-3 py-1.5 rounded shadow-2xl pointer-events-auto">
+          {/* Layer Toggles */}
+          <div className="flex flex-wrap items-center gap-2 bg-surface/90 backdrop-blur-md border border-[#3A506B] px-3 py-1.5 rounded shadow-2xl pointer-events-auto">
             <span className="font-mono text-[10px] text-muted uppercase font-bold tracking-wider mr-1 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
               Layers:
             </span>
 
+            {/* Target Hotel Toggle */}
             <button
               onClick={() => setFilterHotels((v) => !v)}
               className={`px-2 py-0.5 rounded font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
@@ -403,21 +639,36 @@ export default function TacticalDarkMap({
               }`}
             >
               <span className="w-2 h-2 rounded-sm bg-primary"></span>
-              The Claridges
+              Lemon Tree Premier
             </button>
 
+            {/* In Comp-Set Toggle */}
             <button
               onClick={() => setFilterCompSet((v) => !v)}
               className={`px-2 py-0.5 rounded font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
                 filterCompSet
-                  ? "bg-[#3A506B]/50 text-white border border-[#3A506B] font-bold"
+                  ? "bg-amber-400/20 text-amber-300 border border-amber-400/40 font-bold"
                   : "text-muted hover:text-white border border-transparent"
               }`}
             >
-              <span className="w-2 h-2 rounded-sm bg-slate-400"></span>
-              Nearby Hotels ({competitors.length})
+              <span className="w-2 h-2 rounded-sm bg-amber-400"></span>
+              In Comp-Set ({compSetHotels.length})
             </button>
 
+            {/* Nearby Available Hotels Toggle */}
+            <button
+              onClick={() => setFilterNearby((v) => !v)}
+              className={`px-2 py-0.5 rounded font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
+                filterNearby
+                  ? "bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold"
+                  : "text-muted hover:text-white border border-transparent"
+              }`}
+            >
+              <span className="w-2 h-2 rounded-sm bg-purple-400"></span>
+              Nearby Hotels ({availableNearbyHotels.length})
+            </button>
+
+            {/* City Events Toggle */}
             <button
               onClick={() => setFilterEvents((v) => !v)}
               className={`px-2 py-0.5 rounded font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
@@ -427,30 +678,52 @@ export default function TacticalDarkMap({
               }`}
             >
               <span className="w-2 h-2 rounded-full bg-intelligence"></span>
-              City Events ({events.length})
+              Events ({events.length})
             </button>
 
+            {/* Radius Circle Toggle */}
             <button
               onClick={() => setFilterRadii((v) => !v)}
               className={`px-2 py-0.5 rounded font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
                 filterRadii
-                  ? "bg-intelligence/15 text-intelligence border border-intelligence/30 font-medium"
+                  ? "bg-primary/15 text-primary border border-primary/30 font-medium"
                   : "text-muted hover:text-white border border-transparent"
               }`}
             >
-              <span className="material-symbols-outlined text-[13px]">location_on</span>
-              Demand Area
+              <span className="material-symbols-outlined text-[13px]">radar</span>
+              Radius Circle
             </button>
           </div>
 
-          {/* Map Location Tag */}
-          <div className="hidden lg:flex items-center gap-2 bg-surface/90 backdrop-blur-md border border-[#3A506B] px-3 py-1.5 rounded shadow-xl font-mono text-[11px] pointer-events-auto">
-            <span className="text-primary font-bold flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">map</span>
-              DELHI NCR
-            </span>
-            <span className="text-muted">|</span>
-            <span className="text-muted">Central Delhi</span>
+          {/* Right Bar: Radius Distance Selector & Location Tag */}
+          <div className="flex items-center gap-2 pointer-events-auto">
+            {/* Radius Selector Pills */}
+            <div className="flex items-center gap-1 bg-surface/90 backdrop-blur-md border border-[#3A506B] px-2.5 py-1 rounded shadow-xl font-mono text-[11px]">
+              <span className="text-muted text-[10px] uppercase font-bold mr-1">Radius:</span>
+              {[1, 3, 5, 10].map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setRadiusKm(r)}
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors ${
+                    radiusKm === r
+                      ? "bg-primary text-[#0B132B] shadow-sm"
+                      : "text-slate-300 hover:text-white hover:bg-[#2A375C]"
+                  }`}
+                >
+                  {r}km
+                </button>
+              ))}
+            </div>
+
+            {/* Map Location Tag */}
+            <div className="hidden lg:flex items-center gap-2 bg-surface/90 backdrop-blur-md border border-[#3A506B] px-3 py-1.5 rounded shadow-xl font-mono text-[11px]">
+              <span className="text-primary font-bold flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">location_on</span>
+                DELHI NCR
+              </span>
+              <span className="text-muted">|</span>
+              <span className="text-muted">Aerocity</span>
+            </div>
           </div>
         </div>
       )}
@@ -463,11 +736,21 @@ export default function TacticalDarkMap({
         scrollWheelZoom={true}
         style={{ height: "100%", width: "100%", background: "#050914" }}
       >
-        {/* CartoDB Dark Matter Tiles (High contrast, dark tactical look) */}
+        {/* ESRI World Dark Gray Base (Clean, high-contrast dark tiles with zero watermarks or API key requirements) */}
         <TileLayer
-          attribution='&copy; <a href="https://carto.com/">CARTO</a> | OpenStreetMap'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.esri.com/">Esri</a>, DeLorme, NAVTEQ'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
           maxZoom={19}
+          maxNativeZoom={16}
+        />
+
+        {/* ESRI World Dark Gray Reference (Street labels, airport markers, and Aerocity districts) */}
+        <TileLayer
+          attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
+          maxZoom={19}
+          maxNativeZoom={16}
+          opacity={0.85}
         />
 
         {/* Map Controller for programmatic flyTo and resize handling */}
@@ -476,12 +759,26 @@ export default function TacticalDarkMap({
         {/* Custom Zoom and Recenter Controls */}
         {showControls && <MapControlButtons defaultCenter={center} />}
 
+        {/* Competitor Search Radius Circle around Lemon Tree Premier */}
+        {filterRadii && primaryHotel && (
+          <Circle
+            center={[primaryHotel.lat, primaryHotel.lng]}
+            radius={radiusKm * 1000}
+            pathOptions={{
+              color: "#2EC4B6",
+              fillColor: "#2EC4B6",
+              fillOpacity: 0.04,
+              weight: 1.5,
+              dashArray: "5, 8",
+            }}
+          />
+        )}
+
         {/* Event Impact Radii Circles */}
         {filterRadii && filterEvents && events.map((event) => {
           const isSelected = activeEvent?.id === event.id;
           return (
             <React.Fragment key={`radius-${event.id}`}>
-              {/* Outer Radius Impact Zone */}
               <Circle
                 center={[event.lat, event.lng]}
                 radius={event.radiusMeters}
@@ -493,7 +790,6 @@ export default function TacticalDarkMap({
                   dashArray: "6, 6",
                 }}
               />
-              {/* Inner High Impact Core */}
               {isSelected && (
                 <Circle
                   center={[event.lat, event.lng]}
@@ -510,11 +806,11 @@ export default function TacticalDarkMap({
           );
         })}
 
-        {/* Vector Line connecting Active Event to Claridges */}
-        {showConnectionLines && activeEvent && primaryClaridges && (
+        {/* Vector Line connecting Active Event to Lemon Tree Premier */}
+        {showConnectionLines && activeEvent && primaryHotel && (
           <Polyline
             positions={[
-              [primaryClaridges.lat, primaryClaridges.lng],
+              [primaryHotel.lat, primaryHotel.lng],
               [activeEvent.lat, activeEvent.lng],
             ]}
             pathOptions={{
@@ -526,7 +822,7 @@ export default function TacticalDarkMap({
           />
         )}
 
-        {/* Client Properties (The Claridges & The Manor) */}
+        {/* 1. Client Property: Lemon Tree Premier, Delhi Airport */}
         {filterHotels && properties.map((hotel) => (
           <Marker
             key={hotel.id}
@@ -536,12 +832,13 @@ export default function TacticalDarkMap({
             <Popup>
               <div className="p-3 w-64 text-white">
                 <div className="flex items-center justify-between pb-1.5 border-b border-[#3A506B]">
-                  <span className="font-mono text-[10px] uppercase font-bold text-primary tracking-wider">
-                    Your Hotel
+                  <span className="font-mono text-[10px] uppercase font-bold text-primary tracking-wider flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                    Your Client Property
                   </span>
                   {hotel.surgeActive && (
                     <span className="bg-intelligence/20 text-intelligence font-mono text-[9px] font-bold px-1.5 py-0.5 rounded">
-                      HIGH DEMAND
+                      SURGE ACTIVE
                     </span>
                   )}
                 </div>
@@ -600,18 +897,19 @@ export default function TacticalDarkMap({
           </Marker>
         ))}
 
-        {/* Competitors */}
-        {filterCompSet && competitors.map((comp) => (
+        {/* 2. In Comp-Set Hotels (Active Competitors) */}
+        {filterCompSet && compSetHotels.map((comp) => (
           <Marker
-            key={comp.id}
+            key={`comp-${comp.id}`}
             position={[comp.lat, comp.lng]}
             icon={createCompetitorIcon(comp)}
           >
             <Popup>
-              <div className="p-3 w-60 text-white">
+              <div className="p-3 w-64 text-white">
                 <div className="flex items-center justify-between pb-1.5 border-b border-[#3A506B]">
-                  <span className="font-mono text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                    Nearby Hotel
+                  <span className="font-mono text-[10px] uppercase font-bold text-amber-300 tracking-wider flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    In Your Comp-Set
                   </span>
                   <span className="bg-[#3A506B]/40 text-slate-300 font-mono text-[9px] px-1.5 py-0.5 rounded">
                     {comp.ota}
@@ -619,10 +917,15 @@ export default function TacticalDarkMap({
                 </div>
 
                 <h4 className="font-heading text-sm font-bold text-white mt-2">{comp.name}</h4>
-                <p className="text-[11px] text-muted font-mono mb-2">{comp.address}</p>
+                <div className="flex items-center gap-2 text-[11px] text-muted font-mono mb-1">
+                  <span>{"★".repeat(comp.stars)}</span>
+                  <span>•</span>
+                  <span>{comp.distanceKm} km from Lemon Tree</span>
+                </div>
+                <p className="text-[10px] text-muted font-mono mb-2 truncate">{comp.address}</p>
 
                 <div className="flex justify-between items-center bg-[#0B132B] p-2 rounded border border-[#3A506B] mb-2">
-                  <span className="text-xs text-muted font-mono">Current Price:</span>
+                  <span className="text-xs text-muted font-mono">Live Price:</span>
                   <span className="font-mono text-sm font-bold text-white">
                     ₹{comp.rate.toLocaleString("en-IN")}
                   </span>
@@ -636,12 +939,21 @@ export default function TacticalDarkMap({
                   {comp.status}
                 </div>
 
+                {/* Remove from Comp-Set Action Button */}
+                <button
+                  onClick={() => handleToggleHotel(comp.id)}
+                  className="w-full py-1.5 bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white border border-red-500/40 font-mono text-[10px] font-bold uppercase rounded transition-colors cursor-pointer flex items-center justify-center gap-1 mb-1.5"
+                >
+                  <span className="material-symbols-outlined text-[14px]">remove_circle</span>
+                  Remove from Comp-Set
+                </button>
+
                 {onNavigateToTab && (
                   <button
                     onClick={() => onNavigateToTab("matrix")}
-                    className="w-full py-1 bg-surface hover:bg-[#2A375C] border border-[#3A506B] text-white font-mono text-[10px] font-bold uppercase rounded transition-colors cursor-pointer"
+                    className="w-full py-1 bg-surface hover:bg-[#2A375C] border border-[#3A506B] text-muted hover:text-white font-mono text-[9px] font-bold uppercase rounded transition-colors cursor-pointer"
                   >
-                    Compare in Price Matrix
+                    View in Price Matrix
                   </button>
                 )}
               </div>
@@ -649,7 +961,54 @@ export default function TacticalDarkMap({
           </Marker>
         ))}
 
-        {/* Events */}
+        {/* 3. Nearby Hotels (Available to Add to Comp-Set) */}
+        {filterNearby && availableNearbyHotels.map((hotel) => (
+          <Marker
+            key={`nearby-${hotel.id}`}
+            position={[hotel.lat, hotel.lng]}
+            icon={createNearbyHotelIcon(hotel)}
+          >
+            <Popup>
+              <div className="p-3 w-64 text-white">
+                <div className="flex items-center justify-between pb-1.5 border-b border-[#3A506B]">
+                  <span className="font-mono text-[10px] uppercase font-bold text-purple-300 tracking-wider flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                    Nearby Hotel
+                  </span>
+                  <span className="bg-[#3A506B]/40 text-slate-300 font-mono text-[9px] px-1.5 py-0.5 rounded">
+                    {hotel.ota}
+                  </span>
+                </div>
+
+                <h4 className="font-heading text-sm font-bold text-white mt-2">{hotel.name}</h4>
+                <div className="flex items-center gap-2 text-[11px] text-muted font-mono mb-1">
+                  <span>{"★".repeat(hotel.stars)}</span>
+                  <span>•</span>
+                  <span>{hotel.distanceKm} km from Lemon Tree</span>
+                </div>
+                <p className="text-[10px] text-muted font-mono mb-2 truncate">{hotel.address}</p>
+
+                <div className="flex justify-between items-center bg-[#0B132B] p-2 rounded border border-[#3A506B] mb-2.5">
+                  <span className="text-xs text-muted font-mono">Current Price:</span>
+                  <span className="font-mono text-sm font-bold text-primary">
+                    ₹{hotel.rate.toLocaleString("en-IN")}
+                  </span>
+                </div>
+
+                {/* Add to Comp-Set Action Button */}
+                <button
+                  onClick={() => handleToggleHotel(hotel.id)}
+                  className="w-full py-1.5 bg-primary hover:bg-[#15bfae] text-[#0B132B] font-mono text-[11px] font-bold uppercase rounded transition-all shadow-[0_0_12px_rgba(46,196,182,0.35)] cursor-pointer flex items-center justify-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-[14px]">add_circle</span>
+                  + Add to Comp-Set
+                </button>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* 4. Events */}
         {filterEvents && events.map((event) => {
           const isSelected = activeEvent?.id === event.id;
           return (
@@ -710,6 +1069,21 @@ export default function TacticalDarkMap({
           );
         })}
       </MapContainer>
+
+      {/* Floating Comp-Set Summary HUD */}
+      <div className="absolute bottom-6 right-6 z-[400] flex items-center gap-3 bg-surface/95 border border-[#3A506B] px-3.5 py-2 rounded shadow-2xl backdrop-blur-md">
+        <div className="flex items-center gap-2 font-mono text-xs">
+          <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span className="text-muted">Tracking:</span>
+          <strong className="text-white">{compSetHotels.length} hotels</strong>
+        </div>
+        <span className="text-muted font-mono">•</span>
+        <div className="flex items-center gap-1 font-mono text-xs">
+          <span className="w-2 h-2 rounded-full bg-purple-400"></span>
+          <span className="text-purple-300 font-bold">{availableNearbyHotels.length} available</span>
+          <span className="text-muted text-[10px]">(&lt;{radiusKm}km)</span>
+        </div>
+      </div>
 
       {/* Subtle Tactical Radar SVG Grid Overlay for High-Tech Aesthetic */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-15 z-[300]">

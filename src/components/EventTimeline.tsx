@@ -22,6 +22,7 @@ export interface EventItem {
 interface EventTimelineProps {
   onSelectEvent?: (event: EventItem) => void;
   onGeneratePricing?: (event: EventItem) => void;
+  onCompetitorToggled?: (msg: string) => void;
 }
 
 const INITIAL_EVENTS: EventItem[] = [
@@ -83,11 +84,26 @@ const INITIAL_EVENTS: EventItem[] = [
   },
 ];
 
-export default function EventTimeline({ onSelectEvent, onGeneratePricing }: EventTimelineProps) {
+export default function EventTimeline({
+  onSelectEvent,
+  onGeneratePricing,
+  onCompetitorToggled,
+}: EventTimelineProps) {
   const [events, setEvents] = useState<EventItem[]>(INITIAL_EVENTS);
   const [filter, setFilter] = useState<"all" | "High" | "Medium" | "Low">("High");
   const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(INITIAL_EVENTS[0]);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
+
+  const handleToggleCompetitor = async (hotel: any) => {
+    const isAdding = !hotel.inCompSet;
+    if (onCompetitorToggled) {
+      onCompetitorToggled(
+        isAdding
+          ? `${hotel.name} added to your Aerocity comp-set! Tracking in price matrix.`
+          : `${hotel.name} removed from your Aerocity comp-set.`
+      );
+    }
+  };
 
   useEffect(() => {
     fetchEvents();
@@ -398,6 +414,7 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
             showControls={true}
             showFilters={true}
             showConnectionLines={true}
+            onToggleCompetitor={handleToggleCompetitor}
             onSelectEvent={(ev) => {
               const match = events.find((e) => e.id === ev.id);
               if (match) {

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import React from "react";
-import type { MapHotel, MapCompetitor, MapEvent } from "./TacticalDarkMap";
+import type { MapHotel, MapCompetitor, MapEvent, NearbyHotel } from "./TacticalDarkMap";
 
 export interface TacticalMapWrapperProps {
   center?: [number, number];
@@ -11,6 +11,9 @@ export interface TacticalMapWrapperProps {
   activeEventId?: string | null;
   properties?: MapHotel[];
   competitors?: MapCompetitor[];
+  nearbyHotels?: NearbyHotel[];
+  selectedCompetitors?: string[];
+  onToggleCompetitor?: (hotel: NearbyHotel) => void;
   events?: MapEvent[];
   showControls?: boolean;
   showFilters?: boolean;
