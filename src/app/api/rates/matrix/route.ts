@@ -1056,20 +1056,18 @@ const COMPETITOR_SCRAPED_ROOMS: Record<number, Record<string, ScrapedRoomSpec>> 
   },
 };
 
-const COMPETITORS_META = [
-  { id: 101, name: "Aloft New Delhi Aerocity", shortName: "Aloft Aerocity", starRating: 5, reviewScore: 8.9, distanceKm: 0.2 },
-  { id: 102, name: "Holiday Inn Express Aerocity", shortName: "Holiday Inn Aerocity", starRating: 4, reviewScore: 8.7, distanceKm: 0.3 },
-  { id: 103, name: "Novotel New Delhi Aerocity", shortName: "Novotel Aerocity", starRating: 5, reviewScore: 8.8, distanceKm: 0.2 },
-  { id: 104, name: "Pullman New Delhi Aerocity", shortName: "Pullman Aerocity", starRating: 5, reviewScore: 9.1, distanceKm: 0.2 },
-  { id: 105, name: "Ibis New Delhi Aerocity", shortName: "Ibis Aerocity", starRating: 3, reviewScore: 8.2, distanceKm: 0.3 },
-  { id: 106, name: "JW Marriott Hotel Aerocity", shortName: "JW Marriott Aerocity", starRating: 5, reviewScore: 9.3, distanceKm: 0.2 },
-  { id: 107, name: "Roseate House New Delhi", shortName: "Roseate House", starRating: 5, reviewScore: 9.0, distanceKm: 0.3 },
-  { id: 108, name: "Andaz Delhi (by Hyatt)", shortName: "Andaz Delhi", starRating: 5, reviewScore: 9.1, distanceKm: 0.4 },
-  { id: 109, name: "Pride Plaza Hotel Aerocity", shortName: "Pride Plaza Aerocity", starRating: 5, reviewScore: 8.4, distanceKm: 0.4 },
-  { id: 110, name: "Radisson Blu Plaza Delhi Airport", shortName: "Radisson Blu Airport", starRating: 5, reviewScore: 8.7, distanceKm: 1.1 },
-  { id: 111, name: "Four Points by Sheraton Airport", shortName: "Four Points Airport", starRating: 4, reviewScore: 8.3, distanceKm: 2.5 },
-  { id: 112, name: "Vivanta New Delhi Dwarka", shortName: "Vivanta Dwarka", starRating: 5, reviewScore: 8.8, distanceKm: 6.8 },
-];
+import { MASTER_HOTELS_CATALOG } from "@/lib/hotelData";
+
+const COMPETITORS_META = MASTER_HOTELS_CATALOG.map((h) => ({
+  id: h.id,
+  name: h.name,
+  shortName: h.shortName,
+  starRating: h.stars,
+  reviewScore: h.stars === 5 ? 9.1 : h.stars === 4 ? 8.6 : 8.1,
+  distanceKm: h.distanceKm,
+  baseRate: h.rate,
+  ota: h.ota,
+}));
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -1086,6 +1084,15 @@ export async function GET(req: NextRequest) {
 
   const roomDetails = MY_HOTEL_ROOMS[roomType] || MY_HOTEL_ROOMS.superior;
   const baseRate = roomDetails.standardRate;
+
+  // Multipliers for generating realistic category equivalents
+  const catMultiplier: Record<string, number> = {
+    superior: 1.0,
+    deluxe: 1.18,
+    executive: 1.45,
+    suite: 2.1,
+  };
+  const currentMult = catMultiplier[roomType] || 1.0;
 
   // Client hotel rates across the 7-day rolling window
   const myHotel = {
@@ -1107,24 +1114,64 @@ export async function GET(req: NextRequest) {
   // Build competitor response with actual scraped room metadata & rates
   const competitors = COMPETITORS_META.map((meta) => {
     const competitorRooms = COMPETITOR_SCRAPED_ROOMS[meta.id] || {};
-    const scrapedRoom = competitorRooms[roomType] || competitorRooms.superior || {
-      exactName: "Standard Room",
-      otaListingTitle: "Standard Room",
-      size: "280 sq ft",
-      bedrooms: 1,
-      bedConfig: "1 King Bed",
-      bathrooms: "Shower",
-      capacity: "2 Adults",
-      facilities: ["Free Wi-Fi", "Tea/Coffee Maker"],
-      matchScore: 90,
-      matchBadge: "Standard Match",
-      matchReason: "General category equivalent.",
-      channelRates: {
-        MakeMyTrip: { rate: 8000, rawRoom: "Standard Room", scrapedAt: "15 mins ago", inclusions: "Room Only" },
-        "Booking.com": { rate: 8250, rawRoom: "Standard Room", scrapedAt: "25 mins ago", inclusions: "Free Cancellation" },
-        Agoda: { rate: 7950, rawRoom: "Standard Room", scrapedAt: "10 mins ago", inclusions: "Instant Confirmation" },
-      },
-    };
+    let scrapedRoom = competitorRooms[roomType] || competitorRooms.superior;
+
+    if (!scrapedRoom) {
+      // Realistic generated room specs for all expanded regional hotels
+      const brandWord = meta.shortName.split(" ")[0];
+      const scaledRate = Math.round(meta.baseRate * currentMult);
+      const isSuite = roomType === "suite";
+      const isExec = roomType === "executive";
+      const isDeluxe = roomType === "deluxe";
+
+      const roomName = isSuite
+        ? `${brandWord} Executive 2-Bedroom Suite`
+        : isExec
+        ? `${brandWord} Club Floor Room with Lounge`
+        : isDeluxe
+        ? `${brandWord} Premium View Room`
+        : `${brandWord} Superior Room`;
+
+      scrapedRoom = {
+        exactName: roomName,
+        otaListingTitle: `${roomName} - ${isSuite ? "Two Bedroom Living Area" : "King Bed"}`,
+        size: isSuite ? "560 sq ft (52 sq m)" : isExec ? "390 sq ft (36 sq m)" : isDeluxe ? "330 sq ft (31 sq m)" : "290 sq ft (27 sq m)",
+        bedrooms: isSuite ? 2 : 1,
+        bedConfig: isSuite ? "2 King Beds" : "1 King Bed",
+        bathrooms: isSuite ? "2 Full Bathrooms with Tub" : "1 Walk-in Rain Shower",
+        capacity: isSuite ? "4 Adults" : "2 Adults",
+        facilities: isSuite
+          ? ["2 Separate Bedrooms", "Living & Dining Area", "VIP Airport Transfer", "Lounge Access"]
+          : isExec
+          ? ["Executive Lounge Access", "Evening Cocktails", "Buffet Breakfast", "Airport Shuttle"]
+          : isDeluxe
+          ? ["High Floor View", "Deep Soaking Tub", "Complimentary Wi-Fi", "Minibar"]
+          : ["High-speed Wi-Fi", "Walk-in Shower", "Ergonomic Desk", "LED TV"],
+        matchScore: isSuite ? 94 : isExec ? 93 : isDeluxe ? 91 : 92,
+        matchBadge: isSuite ? "2-Bedroom Spec Match" : isExec ? "Club Tier Match" : "Standard Spec Match",
+        matchReason: `Direct ${roomType} category equivalent matched against Lemon Tree Premier specs.`,
+        channelRates: {
+          MakeMyTrip: {
+            rate: scaledRate,
+            rawRoom: roomName,
+            scrapedAt: "12 mins ago",
+            inclusions: isSuite || isExec ? "Breakfast + Lounge Access" : "Room Only (EP)",
+          },
+          "Booking.com": {
+            rate: Math.round(scaledRate * 1.04),
+            rawRoom: `${roomName} - Free Cancellation`,
+            scrapedAt: "24 mins ago",
+            inclusions: "Free Cancellation",
+          },
+          Agoda: {
+            rate: Math.round(scaledRate * 0.98),
+            rawRoom: roomName,
+            scrapedAt: "8 mins ago",
+            inclusions: "Instant Confirmation",
+          },
+        },
+      };
+    }
 
     return {
       id: meta.id,

@@ -31,6 +31,8 @@ export interface CompetitorMatrixProps {
   onToggleCompetitor?: (hotelName: string) => void;
 }
 
+import { MASTER_HOTELS_CATALOG, getShortName as resolveShortName } from "@/lib/hotelData";
+
 export interface NearbyCompHotel {
   id: number;
   name: string;
@@ -39,38 +41,21 @@ export interface NearbyCompHotel {
   distanceKm: number;
   rate: number;
   defaultInSet: boolean;
+  zone?: string;
 }
 
-export const ALL_NEARBY_AEROCITY_HOTELS: NearbyCompHotel[] = [
-  { id: 101, name: "Aloft Aerocity", fullName: "Aloft New Delhi Aerocity", stars: 5, distanceKm: 0.2, rate: 8400, defaultInSet: true },
-  { id: 102, name: "Holiday Inn Aerocity", fullName: "Holiday Inn Express Aerocity", stars: 4, distanceKm: 0.3, rate: 6900, defaultInSet: true },
-  { id: 103, name: "Novotel Aerocity", fullName: "Novotel New Delhi Aerocity", stars: 5, distanceKm: 0.2, rate: 9200, defaultInSet: true },
-  { id: 104, name: "Pullman Aerocity", fullName: "Pullman New Delhi Aerocity", stars: 5, distanceKm: 0.2, rate: 12800, defaultInSet: true },
-  { id: 105, name: "Ibis Aerocity", fullName: "Ibis New Delhi Aerocity", stars: 3, distanceKm: 0.3, rate: 4600, defaultInSet: true },
-  { id: 106, name: "JW Marriott Aerocity", fullName: "JW Marriott Hotel New Delhi Aerocity", stars: 5, distanceKm: 0.2, rate: 14500, defaultInSet: false },
-  { id: 107, name: "Roseate House", fullName: "Roseate House New Delhi", stars: 5, distanceKm: 0.3, rate: 13200, defaultInSet: false },
-  { id: 108, name: "Andaz Delhi", fullName: "Andaz Delhi (by Hyatt)", stars: 5, distanceKm: 0.4, rate: 12900, defaultInSet: false },
-  { id: 109, name: "Pride Plaza Aerocity", fullName: "Pride Plaza Hotel Aerocity", stars: 5, distanceKm: 0.4, rate: 6400, defaultInSet: false },
-  { id: 110, name: "Radisson Blu Airport", fullName: "Radisson Blu Plaza Delhi Airport", stars: 5, distanceKm: 1.1, rate: 8100, defaultInSet: false },
-  { id: 111, name: "Four Points Airport", fullName: "Four Points by Sheraton Delhi Airport", stars: 4, distanceKm: 2.5, rate: 5900, defaultInSet: false },
-  { id: 112, name: "Vivanta Dwarka", fullName: "Vivanta New Delhi, Dwarka", stars: 5, distanceKm: 6.8, rate: 7600, defaultInSet: false },
-];
+export const ALL_NEARBY_AEROCITY_HOTELS: NearbyCompHotel[] = MASTER_HOTELS_CATALOG.map((h) => ({
+  id: h.id,
+  name: h.shortName,
+  fullName: h.name,
+  stars: h.stars,
+  distanceKm: h.distanceKm,
+  rate: h.rate,
+  defaultInSet: h.defaultInSet,
+  zone: h.zone,
+}));
 
-export const getShortName = (fullName: string): string => {
-  if (fullName.includes("Aloft")) return "Aloft Aerocity";
-  if (fullName.includes("Holiday")) return "Holiday Inn Aerocity";
-  if (fullName.includes("Novotel")) return "Novotel Aerocity";
-  if (fullName.includes("Pullman")) return "Pullman Aerocity";
-  if (fullName.includes("Ibis")) return "Ibis Aerocity";
-  if (fullName.includes("JW Marriott") || fullName.includes("Marriott")) return "JW Marriott Aerocity";
-  if (fullName.includes("Roseate")) return "Roseate House";
-  if (fullName.includes("Andaz")) return "Andaz Delhi";
-  if (fullName.includes("Pride Plaza")) return "Pride Plaza Aerocity";
-  if (fullName.includes("Radisson")) return "Radisson Blu Airport";
-  if (fullName.includes("Four Points")) return "Four Points Airport";
-  if (fullName.includes("Vivanta")) return "Vivanta Dwarka";
-  return fullName;
-};
+export const getShortName = resolveShortName;
 
 const ROOM_CATEGORIES = [
   { id: "superior", name: "Superior Room", basePrice: 5800, multiplier: 1.0 },
@@ -894,19 +879,27 @@ export default function CompetitorMatrix({
               </div>
 
               {/* Distance Radius Filter */}
-              <div className="flex items-center gap-1 font-mono text-xs text-muted">
+              <div className="flex items-center gap-1 font-mono text-xs text-muted flex-wrap">
                 <span className="text-[11px] uppercase font-bold mr-1">Within:</span>
-                {[1, 3, 5, 10].map((r) => (
+                {[
+                  { label: "1km", val: 1 },
+                  { label: "3km", val: 3 },
+                  { label: "5km", val: 5 },
+                  { label: "10km", val: 10 },
+                  { label: "15km", val: 15 },
+                  { label: "25km", val: 25 },
+                  { label: "All", val: 999 },
+                ].map((r) => (
                   <button
-                    key={r}
-                    onClick={() => setCompRadius(r)}
-                    className={`px-2 py-1 rounded text-xs transition-colors cursor-pointer ${
-                      compRadius === r
+                    key={r.label}
+                    onClick={() => setCompRadius(r.val)}
+                    className={`px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
+                      compRadius === r.val
                         ? "bg-primary text-[#0B132B] font-bold"
                         : "bg-[#1C2541] text-muted hover:text-white border border-[#3A506B]"
                     }`}
                   >
-                    {r}km
+                    {r.label}
                   </button>
                 ))}
               </div>

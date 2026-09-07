@@ -424,35 +424,9 @@ export default function EventTimeline({
 
         {/* Right Pane: Interactive Map (50%) */}
         <section className="hidden md:flex md:w-1/2 relative h-full overflow-hidden bg-[#050914] border-l border-[#3A506B]">
-          {/* Map Focus View Switcher */}
-          <div className="absolute top-4 left-4 z-[410] flex items-center gap-1 bg-[#0B132B]/95 border border-[#3A506B] p-1 rounded shadow-xl backdrop-blur-md">
-            <button
-              onClick={() => setMapFocus("aerocity")}
-              className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                mapFocus === "aerocity"
-                  ? "bg-primary text-[#0B132B] shadow-sm"
-                  : "text-muted hover:text-white hover:bg-[#1C2541]"
-              }`}
-            >
-              <span className="material-symbols-outlined text-[14px]">hotel</span>
-              <span>Aerocity Hotels (12)</span>
-            </button>
-            <button
-              onClick={() => setMapFocus("event")}
-              className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                mapFocus === "event"
-                  ? "bg-intelligence text-[#0B132B] shadow-sm"
-                  : "text-muted hover:text-white hover:bg-[#1C2541]"
-              }`}
-            >
-              <span className="material-symbols-outlined text-[14px]">event</span>
-              <span>Event Venue</span>
-            </button>
-          </div>
-
           <TacticalMapWrapper
             center={[28.5505, 77.1215]}
-            zoom={14}
+            zoom={15}
             focusedLocation={focusedLocation}
             activeEventId={active?.id}
             events={mapEvents}
@@ -482,26 +456,24 @@ export default function EventTimeline({
             }}
           />
 
-          {/* Active Event Overlay Box */}
+          {/* Active Event Compact Indicator (Non-blocking bottom-left chip) */}
           {active && (
-            <div className="absolute top-16 left-4 bg-surface/95 border border-intelligence px-3.5 py-2.5 rounded shadow-2xl backdrop-blur-md z-[400] max-w-sm pointer-events-none">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="material-symbols-outlined text-intelligence text-base animate-pulse">location_on</span>
-                <span className="font-mono text-[10px] uppercase font-bold text-intelligence tracking-wider">
-                  Selected Event
-                </span>
-              </div>
-              <h4 className="font-heading text-sm font-bold text-white truncate">{active.name}</h4>
-              <p className="text-[11px] text-primary font-mono">{active.venueName}</p>
-              <div className="flex items-center gap-4 mt-2 text-[11px] font-mono text-muted">
-                <span>Footfall: <strong className="text-white">{active.attendance}</strong></span>
-                <span>Distance: <strong className="text-white">{active.distance}</strong></span>
-              </div>
-              {active.demandForecast && (
-                <div className="mt-2 text-[10px] font-mono text-intelligence bg-intelligence/15 px-2 py-0.5 rounded inline-block font-bold">
-                  {active.demandForecast}
+            <div className="absolute bottom-24 left-6 z-[390] max-w-sm pointer-events-auto bg-[#0B132B]/95 border border-intelligence/80 rounded-lg p-2.5 shadow-2xl backdrop-blur-md">
+              <div className="flex items-center justify-between gap-3 pb-1 border-b border-[#3A506B]/50">
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-intelligence text-sm animate-pulse">event</span>
+                  <span className="font-mono text-[9px] uppercase font-bold text-intelligence tracking-wider">
+                    Focused Event
+                  </span>
                 </div>
-              )}
+                <span className="text-[9px] font-mono text-muted">{active.date}</span>
+              </div>
+              <h4 className="font-heading text-xs font-bold text-white mt-1 truncate">{active.name}</h4>
+              <div className="flex items-center gap-2 mt-1 text-[10px] font-mono text-muted">
+                <span className="text-white">{active.distance}</span>
+                <span>•</span>
+                <span className="text-intelligence font-bold">{active.demandForecast || "+35% Demand"}</span>
+              </div>
             </div>
           )}
         </section>
