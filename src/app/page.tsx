@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import HotelListings from "../components/HotelListings";
 import AIActionCenter from "../components/AIActionCenter";
 import CompetitorMatrix from "../components/CompetitorMatrix";
 import EventTimeline, { EventItem } from "../components/EventTimeline";
@@ -13,8 +14,8 @@ interface ToastNotification {
 }
 
 export default function HotelRevenueDashboard() {
-  const [activeTab, setActiveTab] = useState<"action_center" | "matrix" | "events">("action_center");
-  const [selectedAlertId, setSelectedAlertId] = useState<string>("coldplay_delhi");
+  const [activeTab, setActiveTab] = useState<"listings" | "action_center" | "matrix" | "events">("listings");
+  const [selectedAlertId, setSelectedAlertId] = useState<string>("yashobhoomi_aviation");
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
   const [simulatingWebhook, setSimulatingWebhook] = useState(false);
 
@@ -90,9 +91,9 @@ export default function HotelRevenueDashboard() {
 
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-[#0B132B] text-white font-body selection:bg-primary selection:text-[#0B132B]">
-      {/* 1. TOP HEADER (Simple, Friendly & Modern) */}
+      {/* 1. TOP CLIENT HEADER */}
       <header className="h-16 flex-shrink-0 bg-[#0B132B] border-b border-[#3A506B] px-6 flex items-center justify-between z-30 select-none">
-        {/* Left: Hotel Name & System Title */}
+        {/* Left: Client Brand & Hotel Identity */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="size-9 rounded bg-[#1C2541] border border-primary flex items-center justify-center shadow-[0_0_12px_rgba(46,196,182,0.3)]">
@@ -101,32 +102,45 @@ export default function HotelRevenueDashboard() {
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="text-white text-sm font-heading font-bold tracking-tight">
-                  Smart Hotel Pricing
+                  Lemon Tree Premier Portal
                 </span>
                 <span className="px-1.5 py-0.2 bg-primary/10 text-primary border border-primary/30 font-mono text-[9px] font-bold rounded uppercase">
-                  Live & Connected
+                  Client Live
                 </span>
               </div>
               <span className="text-muted text-[11px] font-mono tracking-normal">
-                Lemon Tree Premier, Delhi Airport (Aerocity) • 287 Rooms • Asset 6, Hospitality District
+                Delhi Airport (Aerocity) • 287 Rooms • Asset 6, Hospitality District
               </span>
             </div>
           </div>
         </div>
 
-        {/* Center: 3 Simple Tabs */}
+        {/* Center: 4 Simple Navigation Tabs */}
         <nav className="flex items-center gap-1 bg-[#1C2541] p-1 rounded-sm border border-[#3A506B]">
-          {/* Tab 1: Price Recommendations */}
+          {/* Tab 1: My Hotel Listings */}
+          <button
+            onClick={() => setActiveTab("listings")}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-sm text-xs font-mono font-semibold transition-all cursor-pointer ${
+              activeTab === "listings"
+                ? "bg-primary text-[#0B132B] shadow-[0_0_10px_rgba(46,196,182,0.35)]"
+                : "text-muted hover:text-white hover:bg-[#2A375C]"
+            }`}
+          >
+            <span className="material-symbols-outlined text-[16px]">hotel</span>
+            <span>My Listings & Prices</span>
+          </button>
+
+          {/* Tab 2: Price Recommendations */}
           <button
             onClick={() => setActiveTab("action_center")}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-xs font-mono font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-sm text-xs font-mono font-semibold transition-all cursor-pointer ${
               activeTab === "action_center"
                 ? "bg-primary text-[#0B132B] shadow-[0_0_10px_rgba(46,196,182,0.35)]"
                 : "text-muted hover:text-white hover:bg-[#2A375C]"
             }`}
           >
             <span className="material-symbols-outlined text-[16px]">lightbulb</span>
-            <span>Price Recommendations</span>
+            <span>Price Suggestions</span>
             <span
               className={`text-[10px] font-bold px-1.5 py-0.2 rounded-sm ${
                 activeTab === "action_center"
@@ -138,45 +152,39 @@ export default function HotelRevenueDashboard() {
             </span>
           </button>
 
-          {/* Tab 2: Nearby Hotel Prices */}
+          {/* Tab 3: Aerocity Competitor Prices */}
           <button
             onClick={() => setActiveTab("matrix")}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-xs font-mono font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-sm text-xs font-mono font-semibold transition-all cursor-pointer ${
               activeTab === "matrix"
                 ? "bg-primary text-[#0B132B] shadow-[0_0_10px_rgba(46,196,182,0.35)]"
                 : "text-muted hover:text-white hover:bg-[#2A375C]"
             }`}
           >
             <span className="material-symbols-outlined text-[16px]">grid_on</span>
-            <span>Nearby Hotel Prices</span>
+            <span>Aerocity Competitor Prices</span>
           </button>
 
-          {/* Tab 3: City Events & Demand */}
+          {/* Tab 4: City Events & Map */}
           <button
             onClick={() => setActiveTab("events")}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-xs font-mono font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-sm text-xs font-mono font-semibold transition-all cursor-pointer ${
               activeTab === "events"
                 ? "bg-primary text-[#0B132B] shadow-[0_0_10px_rgba(46,196,182,0.35)]"
                 : "text-muted hover:text-white hover:bg-[#2A375C]"
             }`}
           >
             <span className="material-symbols-outlined text-[16px]">location_on</span>
-            <span>City Events & Demand</span>
+            <span>Events & Map</span>
           </button>
         </nav>
 
-        {/* Right: Status & WhatsApp Test */}
+        {/* Right: Channel Status & WhatsApp Simulation */}
         <div className="flex items-center gap-3">
-          {/* Database Connected Badge */}
+          {/* Channel Manager Status */}
           <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-mono bg-[#1C2541] border border-[#3A506B] text-muted px-2.5 py-1 rounded-sm">
             <span className="size-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>Database Connected</span>
-          </div>
-
-          {/* Booking Sites Connected Badge */}
-          <div className="hidden xl:flex items-center gap-1.5 text-[11px] font-mono bg-[#1C2541] border border-[#3A506B] text-muted px-2.5 py-1 rounded-sm">
-            <span className="size-1.5 rounded-full bg-primary"></span>
-            <span>OTAs Synced</span>
+            <span>eZee Centrix Synced</span>
           </div>
 
           {/* WhatsApp Simulator Button */}
@@ -184,12 +192,12 @@ export default function HotelRevenueDashboard() {
             onClick={handleSimulateWhatsAppApproval}
             disabled={simulatingWebhook}
             className="bg-[#1C2541] hover:bg-[#2A375C] border border-[#3A506B] hover:border-primary text-white px-3.5 py-1.5 rounded-sm text-xs font-mono flex items-center gap-2 transition-all cursor-pointer shadow-sm group disabled:opacity-50"
-            title="Simulates GM tapping 'Approve Rate' on their WhatsApp message"
+            title="Simulates GM tapping 'Approve Rates' on their WhatsApp message"
           >
             <span className="size-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span className="text-[11px] font-bold">WhatsApp Test</span>
             <span className="text-[10px] text-primary group-hover:underline">
-              {simulatingWebhook ? "Sending..." : "Approve ₹8,950"}
+              {simulatingWebhook ? "Sending..." : "Approve Rates"}
             </span>
           </button>
         </div>
@@ -197,28 +205,38 @@ export default function HotelRevenueDashboard() {
 
       {/* 2. MAIN ACTIVE VIEW */}
       <main className="flex flex-1 h-[calc(100vh-64px)] min-w-0 overflow-hidden relative">
-        {/* Tab 1: Price Recommendations */}
-        {activeTab === "action_center" && (
+        {/* Tab 1: Client Room Listings & Live Channel Prices */}
+        {activeTab === "listings" && (
           <div className="w-full h-full animate-in fade-in duration-200">
-            <AIActionCenter
-              selectedAlertId={selectedAlertId}
-              onBackToDashboard={() => setActiveTab("matrix")}
-              onSyncSuccess={(msg) => addToast("New Price Applied", msg)}
+            <HotelListings
+              onGoToRecommendations={() => setActiveTab("action_center")}
+              onRateUpdated={(msg) => addToast("Channel Price Updated", msg)}
             />
           </div>
         )}
 
-        {/* Tab 2: Nearby Hotel Prices */}
+        {/* Tab 2: AI Price Recommendations */}
+        {activeTab === "action_center" && (
+          <div className="w-full h-full animate-in fade-in duration-200">
+            <AIActionCenter
+              selectedAlertId={selectedAlertId}
+              onBackToDashboard={() => setActiveTab("listings")}
+              onSyncSuccess={(msg) => addToast("New Prices Applied", msg)}
+            />
+          </div>
+        )}
+
+        {/* Tab 3: Nearby Aerocity Hotel Prices */}
         {activeTab === "matrix" && (
           <div className="w-full h-full animate-in fade-in duration-200">
             <CompetitorMatrix
-              onBack={() => setActiveTab("action_center")}
+              onBack={() => setActiveTab("listings")}
               onRateUpdated={(msg) => addToast("Price Updated", msg)}
             />
           </div>
         )}
 
-        {/* Tab 3: City Events & Demand */}
+        {/* Tab 4: City Events & Map */}
         {activeTab === "events" && (
           <div className="w-full h-full animate-in fade-in duration-200">
             <EventTimeline
