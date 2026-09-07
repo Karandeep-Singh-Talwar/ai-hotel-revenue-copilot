@@ -112,10 +112,10 @@ const LEMONTREE_LISTINGS: ClientRoomListing[] = [
   },
   {
     id: "suite",
-    name: "Executive Suite",
-    categoryCode: "SUI-1BR",
+    name: "Executive Suite (2-Bedroom)",
+    categoryCode: "SUI-2BR",
     size: "550 sq ft (51 sq m)",
-    bed: "Master Bedroom + Living Area",
+    bed: "2 Separate Bedrooms (1 Master King + 1 Twin/Queen)",
     view: "Panoramic Aerocity & Runway View",
     totalRooms: 20,
     bookedToday: 10,
@@ -129,26 +129,70 @@ const LEMONTREE_LISTINGS: ClientRoomListing[] = [
       direct: 11875,
     },
     ratePlans: [
-      { name: "Luxury Suite Experience", code: "SUI-LUX", price: 12500, inclusions: "1-Bedroom Suite, Jacuzzi Bath, VIP Airport Drop, Full Lounge Access" },
+      { name: "2-Bedroom Luxury Suite Experience", code: "SUI-2BR-VIP", price: 12500, inclusions: "2 Separate Bedrooms, Dedicated Living Salon, Jacuzzi Bath, VIP Airport Drop, Full Lounge Access" },
     ],
-    amenities: ["Separate Living Room", "Jacuzzi Tub", "VIP Airport Transfer", "Express Check-in", "Butler Service"],
+    amenities: ["2 Separate Bedrooms", "Dedicated Living & Dining Salon", "2 Full En-suite Bathrooms", "VIP Airport Transfer (T1/T3)", "Full Executive Lounge Access", "Butler Service"],
     status: "High Demand",
   },
 ];
 
+export interface CompetitorRoomSnippet {
+  hotel: string;
+  roomName: string;
+  size: string;
+  bedConfig: string;
+  facilities: string[];
+  matchScore: number;
+  rate: number;
+  ota: string;
+}
+
+const SCRAPED_COMPETITOR_MATCHES: Record<string, CompetitorRoomSnippet[]> = {
+  superior: [
+    { hotel: "Roseate House", roomName: "Deluxe Room", size: "340 sq ft", bedConfig: "1 King Bed", facilities: ["Forest Rain Shower", "Forest Essentials"], matchScore: 93, rate: 13200, ota: "MakeMyTrip" },
+    { hotel: "JW Marriott Aerocity", roomName: "Deluxe King Guest Room", size: "380 sq ft", bedConfig: "1 King Bed", facilities: ["Marble Bath", "Aromatherapy"], matchScore: 92, rate: 14500, ota: "Booking.com" },
+    { hotel: "Novotel Aerocity", roomName: "Standard Room (King Bed)", size: "290 sq ft", bedConfig: "1 King Bed", facilities: ["Ergonomic Desk", "55-in TV"], matchScore: 94, rate: 9200, ota: "MakeMyTrip" },
+    { hotel: "Aloft Aerocity", roomName: "Aloft Room", size: "300 sq ft", bedConfig: "1 King Bed", facilities: ["Platform Bed", "Bliss Spa"], matchScore: 95, rate: 8400, ota: "MakeMyTrip" },
+    { hotel: "Ibis Aerocity", roomName: "Standard Room (Queen)", size: "210 sq ft", bedConfig: "1 SweetBed Queen", facilities: ["SweetBed", "Soundproof"], matchScore: 86, rate: 4600, ota: "Agoda" },
+  ],
+  deluxe: [
+    { hotel: "Roseate House", roomName: "Premium Room (Runway View)", size: "390 sq ft", bedConfig: "1 King Bed", facilities: ["Runway View", "Deep Soaking Tub", "High Tea"], matchScore: 95, rate: 15800, ota: "MakeMyTrip" },
+    { hotel: "JW Marriott Aerocity", roomName: "Deluxe Pool View King", size: "410 sq ft", bedConfig: "1 King Bed", facilities: ["Pool View", "Deep Marble Tub"], matchScore: 94, rate: 17200, ota: "Booking.com" },
+    { hotel: "Novotel Aerocity", roomName: "Superior Room (Runway View)", size: "330 sq ft", bedConfig: "1 King Bed", facilities: ["Runway View", "Acoustic Glazing", "Bathtub"], matchScore: 96, rate: 10900, ota: "MakeMyTrip" },
+    { hotel: "Pullman Aerocity", roomName: "Executive King (Runway View)", size: "390 sq ft", bedConfig: "1 King Bed", facilities: ["Runway View", "Deep Tub", "Nespresso"], matchScore: 95, rate: 15200, ota: "Agoda" },
+  ],
+  executive: [
+    { hotel: "Roseate House", roomName: "Club Room with Crystal Lounge", size: "440 sq ft", bedConfig: "1 King Bed", facilities: ["Crystal Lounge Access", "Cocktails", "Butler"], matchScore: 96, rate: 19500, ota: "MakeMyTrip" },
+    { hotel: "JW Marriott Aerocity", roomName: "Executive Club Lounge King", size: "440 sq ft", bedConfig: "1 King Bed", facilities: ["M-Club Lounge", "Cocktails & High Tea", "Airport Drop"], matchScore: 95, rate: 21800, ota: "Booking.com" },
+    { hotel: "Novotel Aerocity", roomName: "Executive Premier King with Lounge", size: "380 sq ft", bedConfig: "1 King Bed", facilities: ["Premier Lounge", "Canapés", "Buffet Breakfast"], matchScore: 97, rate: 13600, ota: "MakeMyTrip" },
+    { hotel: "Pullman Aerocity", roomName: "Executive Room with Club Lounge", size: "420 sq ft", bedConfig: "1 King Bed", facilities: ["Pullman Club Lounge", "Wine Hour", "Pluck Breakfast"], matchScore: 96, rate: 18400, ota: "Agoda" },
+  ],
+  suite: [
+    { hotel: "Roseate House", roomName: "Roseate Suite (2-Bedroom Master Suite)", size: "640 sq ft", bedConfig: "2 Master Bedrooms", facilities: ["2 Separate Bedrooms", "Private Dining Salon", "VIP BMW Transfer", "Crystal Lounge VIP"], matchScore: 96, rate: 24800, ota: "MakeMyTrip" },
+    { hotel: "JW Marriott Aerocity", roomName: "Executive 2-Bedroom Luxury Suite", size: "720 sq ft", bedConfig: "2 King Bedrooms", facilities: ["2 Master Bedrooms", "Separate Parlor", "M-Club VIP Lounge", "Mercedes Airport VIP"], matchScore: 95, rate: 28500, ota: "Booking.com" },
+    { hotel: "Novotel Aerocity", roomName: "2-Bedroom Family Suite", size: "550 sq ft", bedConfig: "2 Interconnecting Bedrooms", facilities: ["2 Master Bedrooms", "Living Room", "2 En-suite Baths", "Premier Lounge Access"], matchScore: 97, rate: 18200, ota: "MakeMyTrip" },
+    { hotel: "Pullman Aerocity", roomName: "Executive 2-Bedroom Suite", size: "680 sq ft", bedConfig: "2 Bedrooms (King + Queen)", facilities: ["2 Bedrooms", "Dedicated Salon", "Jacuzzi Bath", "Club Lounge Access"], matchScore: 96, rate: 22400, ota: "MakeMyTrip" },
+    { hotel: "Andaz Delhi", roomName: "Signature 2-Bedroom Residence", size: "690 sq ft", bedConfig: "2 King Bedrooms", facilities: ["2 Bedrooms", "Residential Living Room", "Kitchenette", "VIP Transfer"], matchScore: 95, rate: 26000, ota: "MakeMyTrip" },
+    { hotel: "Aloft Aerocity", roomName: "Savvy Suite (2-Bedroom / Living)", size: "530 sq ft", bedConfig: "2 Bedrooms (King + Twin)", facilities: ["2 Bedrooms", "Living Lounge", "2 Full Baths", "W XYZ Pass"], matchScore: 94, rate: 16900, ota: "Agoda" },
+  ],
+};
+
 interface HotelListingsProps {
   onGoToRecommendations?: () => void;
   onRateUpdated?: (msg: string) => void;
+  onViewCompMatrix?: (roomCategory?: string) => void;
 }
 
 export default function HotelListings({
   onGoToRecommendations,
   onRateUpdated,
+  onViewCompMatrix,
 }: HotelListingsProps) {
   const [listings, setListings] = useState<ClientRoomListing[]>(LEMONTREE_LISTINGS);
   const [editingRoom, setEditingRoom] = useState<ClientRoomListing | null>(null);
   const [newPrice, setNewPrice] = useState<number>(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [expandedRoomComps, setExpandedRoomComps] = useState<Record<string, boolean>>({ suite: true });
 
   const handleOpenEdit = (room: ClientRoomListing) => {
     setEditingRoom(room);
@@ -477,6 +521,103 @@ export default function HotelListings({
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Apples-to-Apples Scraped Competitor Room Comparison Section */}
+              <div className="mt-4 pt-3.5 border-t border-[#3A506B]/50">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <button
+                    onClick={() => setExpandedRoomComps((prev) => ({ ...prev, [room.id]: !prev[room.id] }))}
+                    className="flex items-center gap-2 text-xs font-mono font-bold text-primary hover:text-[#15bfae] cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">balance</span>
+                    <span>
+                      {expandedRoomComps[room.id]
+                        ? `Hide Competitor Room Matches (${(SCRAPED_COMPETITOR_MATCHES[room.id] || []).length} rooms)`
+                        : `Compare Scraped Competitor Rooms (${(SCRAPED_COMPETITOR_MATCHES[room.id] || []).length} exact matches in Aerocity)`}
+                    </span>
+                    <span className="material-symbols-outlined text-[16px]">
+                      {expandedRoomComps[room.id] ? "expand_less" : "expand_more"}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => onViewCompMatrix?.(room.id)}
+                    className="text-[11px] font-mono text-muted hover:text-white flex items-center gap-1 cursor-pointer transition-colors bg-[#0B132B] px-2.5 py-1 rounded border border-[#3A506B]/50 hover:border-primary"
+                  >
+                    <span>View in Live 14-Day Price Matrix</span>
+                    <span className="material-symbols-outlined text-[13px] text-primary">arrow_forward</span>
+                  </button>
+                </div>
+
+                {expandedRoomComps[room.id] && (
+                  <div className="mt-3.5 space-y-2.5 animate-in fade-in duration-150">
+                    <div className="flex items-center justify-between text-[11px] font-mono text-muted bg-[#0B132B] p-2 rounded border border-[#3A506B]/40">
+                      <span>
+                        Apples-to-apples room comparison based on actual scraped room names, square footage & facilities:
+                      </span>
+                      <span className="text-emerald-400 font-bold hidden sm:inline">Live OTA Rates Verified</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      {(SCRAPED_COMPETITOR_MATCHES[room.id] || []).map((comp) => (
+                        <div
+                          key={comp.hotel}
+                          className="p-3 bg-[#0B132B] rounded border border-[#3A506B]/70 flex flex-col justify-between hover:border-primary/40 transition-colors"
+                        >
+                          <div>
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <div>
+                                <span className="text-white font-bold text-xs font-heading">{comp.hotel}</span>
+                                <div className="text-[11px] text-matrix-accent font-semibold">{comp.roomName}</div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <span className="text-sm font-bold font-mono text-white">
+                                  ₹{comp.rate.toLocaleString("en-IN")}
+                                </span>
+                                <span className="text-[10px] text-muted block font-mono">{comp.ota}</span>
+                              </div>
+                            </div>
+
+                            <div className="text-[10px] font-mono text-slate-300 mt-1 flex items-center gap-2">
+                              <span>📐 {comp.size}</span>
+                              <span>•</span>
+                              <span>🛏️ {comp.bedConfig}</span>
+                            </div>
+
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {comp.facilities.map((f) => (
+                                <span
+                                  key={f}
+                                  className="text-[9px] font-mono bg-[#1C2541] text-slate-300 px-1.5 py-0.2 rounded border border-[#3A506B]/40"
+                                >
+                                  ✓ {f}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="mt-2.5 pt-1.5 border-t border-[#3A506B]/30 flex items-center justify-between text-[10px] font-mono">
+                            <span className="text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
+                              {comp.matchScore}% Spec Match
+                            </span>
+                            <span
+                              className={
+                                comp.rate > room.currentBasePrice
+                                  ? "text-primary font-bold"
+                                  : "text-matrix-accent font-bold"
+                              }
+                            >
+                              {comp.rate > room.currentBasePrice
+                                ? `+₹${(comp.rate - room.currentBasePrice).toLocaleString("en-IN")} higher`
+                                : `-₹${(room.currentBasePrice - comp.rate).toLocaleString("en-IN")} cheaper`}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}

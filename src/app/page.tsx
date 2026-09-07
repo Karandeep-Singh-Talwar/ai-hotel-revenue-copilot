@@ -211,6 +211,13 @@ export default function HotelRevenueDashboard() {
             <HotelListings
               onGoToRecommendations={() => setActiveTab("action_center")}
               onRateUpdated={(msg) => addToast("Channel Price Updated", msg)}
+              onViewCompMatrix={(cat) => {
+                setActiveTab("matrix");
+                addToast(
+                  "Room Comparison Loaded",
+                  `Switched to Aerocity Competitor Matrix for live comparison of ${cat ? cat.toUpperCase() : "selected"} room specs.`
+                );
+              }}
             />
           </div>
         )}
