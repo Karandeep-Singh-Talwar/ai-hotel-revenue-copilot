@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import TacticalMapWrapper from "./TacticalMapWrapper";
 import type { MapEvent } from "./TacticalDarkMap";
+import { getShortName } from "./CompetitorMatrix";
 
 export interface EventItem {
   id: string;
@@ -19,10 +20,13 @@ export interface EventItem {
   rawEventDate?: string;
 }
 
-interface EventTimelineProps {
+export interface EventTimelineProps {
   onSelectEvent?: (event: EventItem) => void;
   onGeneratePricing?: (event: EventItem) => void;
   onCompetitorToggled?: (msg: string) => void;
+  onNavigateToTab?: (tab: "listings" | "action_center" | "matrix" | "events") => void;
+  activeCompetitors?: string[];
+  onToggleCompetitor?: (hotelName: string) => void;
 }
 
 const INITIAL_EVENTS: EventItem[] = [
@@ -88,19 +92,26 @@ export default function EventTimeline({
   onSelectEvent,
   onGeneratePricing,
   onCompetitorToggled,
+  onNavigateToTab,
+  activeCompetitors,
+  onToggleCompetitor,
 }: EventTimelineProps) {
   const [events, setEvents] = useState<EventItem[]>(INITIAL_EVENTS);
   const [filter, setFilter] = useState<"all" | "High" | "Medium" | "Low">("High");
   const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(INITIAL_EVENTS[0]);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [mapFocus, setMapFocus] = useState<"aerocity" | "event">("aerocity");
 
   const handleToggleCompetitor = async (hotel: any) => {
-    const isAdding = !hotel.inCompSet;
+    const shortName = getShortName(hotel.name);
+    if (onToggleCompetitor) {
+      onToggleCompetitor(shortName);
+    }
     if (onCompetitorToggled) {
       onCompetitorToggled(
-        isAdding
-          ? `${hotel.name} added to your Aerocity comp-set! Tracking in price matrix.`
-          : `${hotel.name} removed from your Aerocity comp-set.`
+        hotel.inCompSet
+          ? `Added ${hotel.name} to Comp-Set! Column added to Competitor Matrix.`
+          : `Removed ${hotel.name} from Comp-Set.`
       );
     }
   };
@@ -201,6 +212,14 @@ export default function EventTimeline({
   }, [events]);
 
   const focusedLocation = useMemo(() => {
+    if (mapFocus === "aerocity") {
+      return {
+        lat: 28.5505,
+        lng: 77.1215,
+        zoom: 14,
+        id: "aerocity_cluster",
+      };
+    }
     if (!active) return null;
     return {
       lat: active.lat,
@@ -208,7 +227,7 @@ export default function EventTimeline({
       zoom: 13,
       id: active.id,
     };
-  }, [active]);
+  }, [mapFocus, active]);
 
   return (
     <div className="flex flex-1 h-full w-full overflow-hidden bg-[#0B132B] text-white">
@@ -405,20 +424,56 @@ export default function EventTimeline({
 
         {/* Right Pane: Interactive Map (50%) */}
         <section className="hidden md:flex md:w-1/2 relative h-full overflow-hidden bg-[#050914] border-l border-[#3A506B]">
+          {/* Map Focus View Switcher */}
+          <div className="absolute top-4 left-4 z-[410] flex items-center gap-1 bg-[#0B132B]/95 border border-[#3A506B] p-1 rounded shadow-xl backdrop-blur-md">
+            <button
+              onClick={() => setMapFocus("aerocity")}
+              className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                mapFocus === "aerocity"
+                  ? "bg-primary text-[#0B132B] shadow-sm"
+                  : "text-muted hover:text-white hover:bg-[#1C2541]"
+              }`}
+            >
+              <span className="material-symbols-outlined text-[14px]">hotel</span>
+              <span>Aerocity Hotels (12)</span>
+            </button>
+            <button
+              onClick={() => setMapFocus("event")}
+              className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                mapFocus === "event"
+                  ? "bg-intelligence text-[#0B132B] shadow-sm"
+                  : "text-muted hover:text-white hover:bg-[#1C2541]"
+              }`}
+            >
+              <span className="material-symbols-outlined text-[14px]">event</span>
+              <span>Event Venue</span>
+            </button>
+          </div>
+
           <TacticalMapWrapper
-            center={[active?.lat || 28.5505, active?.lng || 77.1215]}
-            zoom={13}
+            center={[28.5505, 77.1215]}
+            zoom={14}
             focusedLocation={focusedLocation}
             activeEventId={active?.id}
             events={mapEvents}
+            selectedCompetitors={activeCompetitors}
             showControls={true}
             showFilters={true}
             showConnectionLines={true}
             onToggleCompetitor={handleToggleCompetitor}
+            onNavigateToTab={(tab) => {
+              if (onNavigateToTab) {
+                if (tab === "overview") onNavigateToTab("listings");
+                else if (tab === "ai_actions") onNavigateToTab("action_center");
+                else if (tab === "matrix") onNavigateToTab("matrix");
+                else if (tab === "events") onNavigateToTab("events");
+              }
+            }}
             onSelectEvent={(ev) => {
               const match = events.find((e) => e.id === ev.id);
               if (match) {
                 setSelectedEvent(match);
+                setMapFocus("event");
                 if (onSelectEvent) onSelectEvent(match);
               }
             }}

@@ -24,9 +24,11 @@ export interface CompetitorRateCell {
   };
 }
 
-interface CompetitorMatrixProps {
+export interface CompetitorMatrixProps {
   onRateUpdated?: (msg: string) => void;
   onBack?: () => void;
+  activeCompetitors?: string[];
+  onToggleCompetitor?: (hotelName: string) => void;
 }
 
 export interface NearbyCompHotel {
@@ -54,7 +56,7 @@ export const ALL_NEARBY_AEROCITY_HOTELS: NearbyCompHotel[] = [
   { id: 112, name: "Vivanta Dwarka", fullName: "Vivanta New Delhi, Dwarka", stars: 5, distanceKm: 6.8, rate: 7600, defaultInSet: false },
 ];
 
-const getShortName = (fullName: string): string => {
+export const getShortName = (fullName: string): string => {
   if (fullName.includes("Aloft")) return "Aloft Aerocity";
   if (fullName.includes("Holiday")) return "Holiday Inn Aerocity";
   if (fullName.includes("Novotel")) return "Novotel Aerocity";
@@ -116,16 +118,22 @@ export interface CompetitorSpecCard {
   rate: number;
 }
 
-export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMatrixProps) {
+export default function CompetitorMatrix({
+  onRateUpdated,
+  onBack,
+  activeCompetitors: propActiveCompetitors,
+  onToggleCompetitor: propOnToggleCompetitor,
+}: CompetitorMatrixProps) {
   const [selectedOta, setSelectedOta] = useState<string>("MakeMyTrip");
   const [selectedRoomCategory, setSelectedRoomCategory] = useState<string>("superior");
-  const [activeCompetitors, setActiveCompetitors] = useState<string[]>([
+  const [internalActiveCompetitors, setInternalActiveCompetitors] = useState<string[]>([
     "Aloft Aerocity",
     "Holiday Inn Aerocity",
     "Novotel Aerocity",
     "Pullman Aerocity",
     "Ibis Aerocity",
   ]);
+  const activeCompetitors = propActiveCompetitors || internalActiveCompetitors;
   const [showCompSetModal, setShowCompSetModal] = useState<boolean>(false);
   const [showSpecsModal, setShowSpecsModal] = useState<boolean>(false);
   const [compSearch, setCompSearch] = useState<string>("");
@@ -317,6 +325,11 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
   };
 
   const handleToggleCompetitor = async (hotel: NearbyCompHotel) => {
+    if (propOnToggleCompetitor) {
+      propOnToggleCompetitor(hotel.name);
+      return;
+    }
+
     const isInSet = activeCompetitors.includes(hotel.name);
     let nextComps: string[];
     if (isInSet) {
@@ -328,7 +341,7 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
     } else {
       nextComps = [...activeCompetitors, hotel.name];
     }
-    setActiveCompetitors(nextComps);
+    setInternalActiveCompetitors(nextComps);
 
     try {
       const ids = ALL_NEARBY_AEROCITY_HOTELS.filter((h) => nextComps.includes(h.name)).map((h) => h.id);

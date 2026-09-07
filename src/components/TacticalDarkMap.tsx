@@ -12,6 +12,7 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { getShortName } from "./CompetitorMatrix";
 
 // Fix for default Leaflet icon paths in Next.js bundler
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -454,8 +455,12 @@ export default function TacticalDarkMap({
   const [filterEvents, setFilterEvents] = useState(true);
   const [filterRadii, setFilterRadii] = useState(true);
 
-  // Search Radius State (km)
-  const [radiusKm, setRadiusKm] = useState<number>(5);
+  // Search Radius State (km) - default to 15km so all 12 Aerocity hotels are visible
+  const [radiusKm, setRadiusKm] = useState<number>(15);
+
+  // Drawer state for on-map hotel management tray
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerTab, setDrawerTab] = useState<"all" | "comp" | "nearby">("all");
 
   // Local state for nearby hotels list (tracks inCompSet status dynamically)
   const [localHotels, setLocalHotels] = useState<NearbyHotel[]>(nearbyHotels);
@@ -464,9 +469,27 @@ export default function TacticalDarkMap({
   useEffect(() => {
     if (selectedCompetitors && selectedCompetitors.length > 0) {
       setLocalHotels((prev) =>
+        prev.map((h) => {
+          const short = getShortName(h.name);
+          const inComp = selectedCompetitors.some(
+            (c) =>
+              c === h.name ||
+              c === h.id ||
+              c === short ||
+              h.name.toLowerCase().includes(c.toLowerCase()) ||
+              c.toLowerCase().includes(h.id.toLowerCase())
+          );
+          return {
+            ...h,
+            inCompSet: inComp,
+          };
+        })
+      );
+    } else if (selectedCompetitors && selectedCompetitors.length === 0) {
+      setLocalHotels((prev) =>
         prev.map((h) => ({
           ...h,
-          inCompSet: selectedCompetitors.includes(h.name) || selectedCompetitors.includes(h.id),
+          inCompSet: false,
         }))
       );
     } else {
@@ -487,19 +510,19 @@ export default function TacticalDarkMap({
 
   // Toggle comp-set addition/removal
   const handleToggleHotel = (hotelId: string) => {
-    let toggledHotel: NearbyHotel | undefined;
+    const target = localHotels.find((h) => h.id === hotelId);
+    if (!target) return;
+    const willBeIn = !target.inCompSet;
+
     setLocalHotels((prev) =>
-      prev.map((h) => {
-        if (h.id === hotelId) {
-          toggledHotel = { ...h, inCompSet: !h.inCompSet };
-          return toggledHotel;
-        }
-        return h;
-      })
+      prev.map((h) => (h.id === hotelId ? { ...h, inCompSet: willBeIn } : h))
     );
 
-    if (toggledHotel && onToggleCompetitor) {
-      onToggleCompetitor(toggledHotel);
+    if (onToggleCompetitor) {
+      onToggleCompetitor({
+        ...target,
+        inCompSet: willBeIn,
+      });
     }
   };
 
@@ -523,7 +546,7 @@ export default function TacticalDarkMap({
   );
 
   const availableNearbyHotels = useMemo(
-    () => hotelsWithDist.filter((h) => !h.inCompSet && (h.distanceKm || 0) <= radiusKm),
+    () => hotelsWithDist.filter((h) => !h.inCompSet && (radiusKm >= 15 || (h.distanceKm || 0) <= radiusKm)),
     [hotelsWithDist, radiusKm]
   );
 
@@ -533,7 +556,7 @@ export default function TacticalDarkMap({
     return L.divIcon({
       className: "custom-tactical-marker",
       html: `
-        <div class="flex flex-col items-center group cursor-pointer -translate-x-1/2 -translate-y-1/2">
+        <div class="flex flex-col items-center group cursor-pointer -translate-x-1/2 -translate-y-1/2 z-40">
           <div class="flex items-center gap-1.5 bg-[#0B132B] border-2 ${
             isSurge ? "border-[#FF9F1C] text-[#FF9F1C] tactical-pulse-amber" : "border-[#2EC4B6] text-[#2EC4B6] tactical-pulse-cyan"
           } px-2.5 py-1 rounded shadow-[0_0_20px_rgba(46,196,182,0.6)] transition-transform group-hover:scale-110">
@@ -541,56 +564,59 @@ export default function TacticalDarkMap({
               hotel
             </span>
             <div class="flex flex-col text-left leading-none">
-              <span class="text-[9px] font-bold text-primary uppercase tracking-tight">Your Hotel</span>
+              <span class="text-[9px] font-bold text-primary uppercase tracking-tight">Lemon Tree Premier</span>
               <span class="font-mono text-[12px] font-bold text-white tracking-tight">₹${hotel.currentRate.toLocaleString('en-IN')}</span>
             </div>
           </div>
           <div class="w-2.5 h-2.5 rotate-45 -mt-1 ${isSurge ? 'bg-[#FF9F1C]' : 'bg-[#2EC4B6]'}"></div>
         </div>
       `,
-      iconSize: [120, 52],
-      iconAnchor: [60, 52],
+      iconSize: [140, 52],
+      iconAnchor: [70, 52],
       popupAnchor: [0, -52],
     });
   };
 
   const createCompetitorIcon = (comp: NearbyHotel) => {
     const isUndercut = comp.isUndercut;
+    const shortName = getShortName(comp.name).replace(" Aerocity", "").replace(" Airport", "");
     return L.divIcon({
       className: "custom-tactical-marker",
       html: `
-        <div class="flex flex-col items-center group cursor-pointer -translate-x-1/2 -translate-y-1/2 opacity-95 hover:opacity-100">
-          <div class="flex items-center gap-1 bg-[#0B132B]/95 border ${
+        <div class="flex flex-col items-center group cursor-pointer -translate-x-1/2 -translate-y-1/2 z-30">
+          <div class="flex items-center gap-1.5 bg-[#0B132B]/95 border ${
             isUndercut ? "border-[#E71D36] text-[#E71D36]" : "border-[#FF9F1C] text-amber-300"
-          } px-2 py-0.5 rounded shadow-lg transition-transform group-hover:scale-105">
-            <span class="material-symbols-outlined text-[11px] ${isUndercut ? 'text-[#E71D36]' : 'text-[#FF9F1C]'}">domain</span>
-            <span class="font-mono text-[10px] text-slate-100 font-bold">₹${comp.rate.toLocaleString('en-IN')}</span>
-            <span class="text-[8px] font-bold text-amber-400 bg-amber-400/20 px-1 rounded">COMP</span>
+          } px-2 py-0.5 rounded shadow-[0_4px_12px_rgba(0,0,0,0.6)] transition-transform group-hover:scale-110">
+            <span class="text-[10px] font-bold text-white tracking-tight">${shortName}</span>
+            <span class="font-mono text-[10px] ${isUndercut ? "text-rose-400" : "text-amber-300"} font-bold">₹${comp.rate.toLocaleString('en-IN')}</span>
+            <span class="text-[8px] font-bold text-[#0B132B] bg-amber-400 px-1 rounded uppercase font-mono">SET</span>
           </div>
           <div class="w-1.5 h-1.5 rotate-45 -mt-0.5 ${isUndercut ? 'bg-[#E71D36]' : 'bg-[#FF9F1C]'}"></div>
         </div>
       `,
-      iconSize: [95, 34],
-      iconAnchor: [47, 34],
+      iconSize: [125, 34],
+      iconAnchor: [62, 34],
       popupAnchor: [0, -34],
     });
   };
 
   const createNearbyHotelIcon = (hotel: NearbyHotel) => {
+    const shortName = getShortName(hotel.name).replace(" Aerocity", "").replace(" Airport", "");
     return L.divIcon({
       className: "custom-tactical-marker",
       html: `
-        <div class="flex flex-col items-center group cursor-pointer -translate-x-1/2 -translate-y-1/2 opacity-85 hover:opacity-100">
-          <div class="flex items-center gap-1 bg-[#1C2541]/95 border border-[#8A2BE2] text-purple-200 px-1.5 py-0.5 rounded shadow-lg transition-transform group-hover:scale-105">
-            <span class="material-symbols-outlined text-[11px] text-[#C084FC]">add_circle</span>
-            <span class="font-mono text-[10px] text-white">₹${hotel.rate.toLocaleString('en-IN')}</span>
+        <div class="flex flex-col items-center group cursor-pointer -translate-x-1/2 -translate-y-1/2 opacity-90 hover:opacity-100 z-20">
+          <div class="flex items-center gap-1.5 bg-[#1C2541]/95 border border-[#8A2BE2] text-purple-200 px-2 py-0.5 rounded shadow-[0_4px_12px_rgba(0,0,0,0.6)] transition-transform group-hover:scale-110">
+            <span class="text-[10px] font-semibold text-slate-200 tracking-tight">${shortName}</span>
+            <span class="font-mono text-[10px] text-[#C084FC] font-bold">₹${hotel.rate.toLocaleString('en-IN')}</span>
+            <span class="text-[8px] font-bold text-white bg-purple-600/80 px-1 rounded uppercase font-mono">+ADD</span>
           </div>
           <div class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-[#8A2BE2]"></div>
         </div>
       `,
-      iconSize: [80, 32],
-      iconAnchor: [40, 32],
-      popupAnchor: [0, -32],
+      iconSize: [125, 34],
+      iconAnchor: [62, 34],
+      popupAnchor: [0, -34],
     });
   };
 
@@ -700,7 +726,7 @@ export default function TacticalDarkMap({
             {/* Radius Selector Pills */}
             <div className="flex items-center gap-1 bg-surface/90 backdrop-blur-md border border-[#3A506B] px-2.5 py-1 rounded shadow-xl font-mono text-[11px]">
               <span className="text-muted text-[10px] uppercase font-bold mr-1">Radius:</span>
-              {[1, 3, 5, 10].map((r) => (
+              {[3, 5, 10, 15].map((r) => (
                 <button
                   key={r}
                   onClick={() => setRadiusKm(r)}
@@ -710,7 +736,7 @@ export default function TacticalDarkMap({
                       : "text-slate-300 hover:text-white hover:bg-[#2A375C]"
                   }`}
                 >
-                  {r}km
+                  {r === 15 ? "All (12)" : `${r}km`}
                 </button>
               ))}
             </div>
@@ -951,9 +977,10 @@ export default function TacticalDarkMap({
                 {onNavigateToTab && (
                   <button
                     onClick={() => onNavigateToTab("matrix")}
-                    className="w-full py-1 bg-surface hover:bg-[#2A375C] border border-[#3A506B] text-muted hover:text-white font-mono text-[9px] font-bold uppercase rounded transition-colors cursor-pointer"
+                    className="w-full py-1.5 bg-primary/20 hover:bg-primary text-primary hover:text-[#0B132B] border border-primary/40 font-mono text-[10px] font-bold uppercase rounded transition-colors cursor-pointer flex items-center justify-center gap-1"
                   >
-                    View in Price Matrix
+                    <span className="material-symbols-outlined text-[14px]">grid_on</span>
+                    View in Price Matrix →
                   </button>
                 )}
               </div>
@@ -1070,18 +1097,138 @@ export default function TacticalDarkMap({
         })}
       </MapContainer>
 
-      {/* Floating Comp-Set Summary HUD */}
-      <div className="absolute bottom-6 right-6 z-[400] flex items-center gap-3 bg-surface/95 border border-[#3A506B] px-3.5 py-2 rounded shadow-2xl backdrop-blur-md">
-        <div className="flex items-center gap-2 font-mono text-xs">
-          <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-          <span className="text-muted">Tracking:</span>
-          <strong className="text-white">{compSetHotels.length} hotels</strong>
-        </div>
-        <span className="text-muted font-mono">•</span>
-        <div className="flex items-center gap-1 font-mono text-xs">
-          <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-          <span className="text-purple-300 font-bold">{availableNearbyHotels.length} available</span>
-          <span className="text-muted text-[10px]">(&lt;{radiusKm}km)</span>
+      {/* Aerocity Hotels Quick Drawer / Comp-Set Manager on the Map */}
+      <div className="absolute bottom-4 right-4 z-[400] flex flex-col items-end">
+        {drawerOpen && (
+          <div className="mb-2 w-80 sm:w-96 bg-[#0B132B]/95 border border-[#3A506B] rounded-lg shadow-[0_12px_40px_rgba(0,0,0,0.85)] backdrop-blur-md overflow-hidden flex flex-col max-h-[380px] animate-in slide-in-from-bottom-3 duration-200">
+            {/* Header */}
+            <div className="p-3 bg-[#1C2541] border-b border-[#3A506B] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[18px]">domain</span>
+                <span className="font-heading text-xs font-bold text-white">Aerocity Hotels & Comp-Set</span>
+              </div>
+              <button
+                onClick={() => setDrawerOpen(false)}
+                className="text-muted hover:text-white size-6 flex items-center justify-center rounded hover:bg-[#2A375C] cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex items-center border-b border-[#3A506B] bg-[#141d33] px-2 py-1 text-[11px] font-mono">
+              <button
+                onClick={() => setDrawerTab("all")}
+                className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                  drawerTab === "all" ? "bg-primary text-[#0B132B] font-bold" : "text-muted hover:text-white"
+                }`}
+              >
+                All ({hotelsWithDist.length})
+              </button>
+              <button
+                onClick={() => setDrawerTab("comp")}
+                className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                  drawerTab === "comp" ? "bg-amber-400 text-[#0B132B] font-bold" : "text-amber-300/80 hover:text-white"
+                }`}
+              >
+                In Comp-Set ({compSetHotels.length})
+              </button>
+              <button
+                onClick={() => setDrawerTab("nearby")}
+                className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                  drawerTab === "nearby" ? "bg-purple-500 text-white font-bold" : "text-purple-300/80 hover:text-white"
+                }`}
+              >
+                Available ({availableNearbyHotels.length})
+              </button>
+            </div>
+
+            {/* Hotels List */}
+            <div className="overflow-y-auto p-2 space-y-1.5 max-h-60 font-mono text-xs divide-y divide-[#3A506B]/30">
+              {(drawerTab === "all"
+                ? hotelsWithDist
+                : drawerTab === "comp"
+                ? compSetHotels
+                : availableNearbyHotels
+              ).map((hotel) => {
+                return (
+                  <div
+                    key={hotel.id}
+                    className="pt-1.5 first:pt-0 flex items-center justify-between gap-2 p-1.5 rounded hover:bg-[#1C2541]/70 transition-colors"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-white font-bold truncate text-[11px] font-heading">{hotel.name}</span>
+                        {hotel.inCompSet ? (
+                          <span className="bg-amber-400/20 text-amber-300 text-[8px] font-bold px-1 rounded uppercase">In Set</span>
+                        ) : (
+                          <span className="bg-purple-500/20 text-purple-300 text-[8px] font-bold px-1 rounded uppercase">Available</span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-muted flex items-center gap-2 mt-0.5">
+                        <span className="text-amber-400">{"★".repeat(hotel.stars)}</span>
+                        <span>•</span>
+                        <span>{hotel.distanceKm} km</span>
+                        <span>•</span>
+                        <span className="text-primary font-bold">₹{hotel.rate.toLocaleString("en-IN")}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleToggleHotel(hotel.id)}
+                      className={`shrink-0 px-2 py-1 rounded text-[10px] font-bold uppercase transition-all cursor-pointer ${
+                        hotel.inCompSet
+                          ? "bg-red-500/15 hover:bg-red-500 text-red-300 hover:text-white border border-red-500/30"
+                          : "bg-primary hover:bg-[#15bfae] text-[#0B132B] shadow-[0_0_8px_rgba(46,196,182,0.3)]"
+                      }`}
+                    >
+                      {hotel.inCompSet ? "Remove" : "+ Add"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            {onNavigateToTab && (
+              <div className="p-2 border-t border-[#3A506B] bg-[#141d33] flex justify-between items-center">
+                <span className="text-[10px] text-muted font-mono">
+                  {compSetHotels.length} hotels in Price Matrix
+                </span>
+                <button
+                  onClick={() => onNavigateToTab("matrix")}
+                  className="text-primary hover:underline text-[10px] font-mono font-bold flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Open Competitor Matrix</span>
+                  <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Trigger Button / Summary HUD */}
+        <div className="flex items-center gap-2 bg-surface/95 border border-[#3A506B] p-1.5 rounded shadow-2xl backdrop-blur-md">
+          <div className="flex items-center gap-2 font-mono text-xs px-2">
+            <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span className="text-muted">Comp-Set:</span>
+            <strong className="text-white">{compSetHotels.length}</strong>
+            <span className="text-muted">•</span>
+            <span className="w-2 h-2 rounded-full bg-purple-400"></span>
+            <span className="text-muted">Available:</span>
+            <strong className="text-purple-300">{availableNearbyHotels.length}</strong>
+          </div>
+
+          <button
+            onClick={() => setDrawerOpen((v) => !v)}
+            className="bg-[#1C2541] hover:bg-[#2A375C] border border-[#3A506B] hover:border-primary text-white px-2.5 py-1 rounded text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[14px] text-primary">domain</span>
+            <span>{drawerOpen ? "Hide Hotels" : "All 12 Hotels"}</span>
+            <span className="material-symbols-outlined text-[14px]">
+              {drawerOpen ? "expand_more" : "expand_less"}
+            </span>
+          </button>
         </div>
       </div>
 

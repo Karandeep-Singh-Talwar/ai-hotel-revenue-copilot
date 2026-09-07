@@ -3,7 +3,10 @@
 import React, { useState } from "react";
 import HotelListings from "../components/HotelListings";
 import AIActionCenter from "../components/AIActionCenter";
-import CompetitorMatrix from "../components/CompetitorMatrix";
+import CompetitorMatrix, {
+  ALL_NEARBY_AEROCITY_HOTELS,
+  getShortName,
+} from "../components/CompetitorMatrix";
 import EventTimeline, { EventItem } from "../components/EventTimeline";
 
 interface ToastNotification {
@@ -19,6 +22,15 @@ export default function HotelRevenueDashboard() {
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
   const [simulatingWebhook, setSimulatingWebhook] = useState(false);
 
+  // Global Comp-Set State synchronized across Map and Price Matrix
+  const [activeCompetitors, setActiveCompetitors] = useState<string[]>([
+    "Aloft Aerocity",
+    "Holiday Inn Aerocity",
+    "Novotel Aerocity",
+    "Pullman Aerocity",
+    "Ibis Aerocity",
+  ]);
+
   const addToast = (
     title: string,
     message: string,
@@ -29,6 +41,56 @@ export default function HotelRevenueDashboard() {
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 5000);
+  };
+
+  const handleToggleCompetitor = async (name: string) => {
+    const shortName = getShortName(name);
+    const isCurrentlyIn = activeCompetitors.includes(shortName);
+    let next: string[];
+
+    if (isCurrentlyIn) {
+      if (activeCompetitors.length <= 1) {
+        addToast(
+          "Cannot Remove",
+          "You must keep at least 1 competitor in your Aerocity comp-set.",
+          "warning"
+        );
+        return;
+      }
+      next = activeCompetitors.filter((c) => c !== shortName);
+      addToast(
+        "Comp-Set Updated",
+        `Removed ${shortName} from your Aerocity comp-set.`,
+        "info"
+      );
+    } else {
+      next = [...activeCompetitors, shortName];
+      addToast(
+        "Comp-Set Updated",
+        `Added ${shortName} to your comp-set! Price column added to Competitor Matrix.`,
+        "success"
+      );
+    }
+
+    setActiveCompetitors(next);
+
+    // Persist changes to backend
+    try {
+      const compIds = next
+        .map((compName) => ALL_NEARBY_AEROCITY_HOTELS.find((h) => h.name === compName)?.id)
+        .filter(Boolean) as number[];
+
+      await fetch("/api/comp-set/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hotelId: 1,
+          competitorIds: compIds,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to update comp set in database:", err);
+    }
   };
 
   const handleSimulateWhatsAppApproval = async () => {
@@ -163,6 +225,15 @@ export default function HotelRevenueDashboard() {
           >
             <span className="material-symbols-outlined text-[16px]">grid_on</span>
             <span>Aerocity Competitor Prices</span>
+            <span
+              className={`text-[10px] font-bold px-1.5 py-0.2 rounded-sm ${
+                activeTab === "matrix"
+                  ? "bg-[#0B132B] text-primary"
+                  : "bg-amber-400/20 text-amber-300 border border-amber-400/30"
+              }`}
+            >
+              {activeCompetitors.length} in set
+            </span>
           </button>
 
           {/* Tab 4: City Events & Map */}
@@ -237,6 +308,8 @@ export default function HotelRevenueDashboard() {
         {activeTab === "matrix" && (
           <div className="w-full h-full animate-in fade-in duration-200">
             <CompetitorMatrix
+              activeCompetitors={activeCompetitors}
+              onToggleCompetitor={handleToggleCompetitor}
               onBack={() => setActiveTab("listings")}
               onRateUpdated={(msg) => addToast("Price Updated", msg)}
             />
@@ -247,9 +320,12 @@ export default function HotelRevenueDashboard() {
         {activeTab === "events" && (
           <div className="w-full h-full animate-in fade-in duration-200">
             <EventTimeline
+              activeCompetitors={activeCompetitors}
+              onToggleCompetitor={handleToggleCompetitor}
               onGeneratePricing={handleEventPricingJump}
               onSelectEvent={(evt) => console.log("Selected event:", evt)}
               onCompetitorToggled={(msg) => addToast("Comp-Set Updated", msg)}
+              onNavigateToTab={(tab) => setActiveTab(tab)}
             />
           </div>
         )}
