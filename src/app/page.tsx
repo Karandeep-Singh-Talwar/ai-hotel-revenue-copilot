@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import GlobalOverview from "../components/GlobalOverview";
-import CompetitorMatrix from "../components/CompetitorMatrix";
 import AIActionCenter from "../components/AIActionCenter";
+import CompetitorMatrix from "../components/CompetitorMatrix";
 import EventTimeline, { EventItem } from "../components/EventTimeline";
 
 interface ToastNotification {
@@ -14,10 +13,7 @@ interface ToastNotification {
 }
 
 export default function HotelRevenueDashboard() {
-  const [activeTab, setActiveTab] = useState<"overview" | "matrix" | "ai_actions" | "events">(
-    "overview"
-  );
-  const [selectedProperty, setSelectedProperty] = useState("The Claridges New Delhi");
+  const [activeTab, setActiveTab] = useState<"action_center" | "matrix" | "events">("action_center");
   const [selectedAlertId, setSelectedAlertId] = useState<string>("coldplay_delhi");
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
   const [simulatingWebhook, setSimulatingWebhook] = useState(false);
@@ -37,6 +33,7 @@ export default function HotelRevenueDashboard() {
   const handleSimulateWhatsAppApproval = async () => {
     setSimulatingWebhook(true);
     try {
+      // Simulate WhatsApp message reply from General Manager
       const mockMetaPayload = {
         entry: [
           {
@@ -71,8 +68,8 @@ export default function HotelRevenueDashboard() {
 
       if (data.status === "EVENT_RECEIVED") {
         addToast(
-          "WhatsApp Copilot Triggered",
-          "Received 'Approve Rate' event from +919810123456. Neon stored procedure executed & ARI pushed to eZee Centrix!"
+          "WhatsApp Rates Approved!",
+          "The General Manager approved new rates for Lemon Tree Premier Aerocity (Superior ₹7,200, Deluxe ₹8,450, Executive ₹10,600, Suite ₹15,400). All booking sites (MakeMyTrip, Booking.com, Agoda) updated!"
         );
       }
     } catch (err) {
@@ -82,220 +79,173 @@ export default function HotelRevenueDashboard() {
     }
   };
 
-  const handleQuickReview = (alertId: string) => {
-    setSelectedAlertId(alertId);
-    setActiveTab("ai_actions");
-  };
-
   const handleEventPricingJump = (event: EventItem) => {
-    setSelectedAlertId("coldplay_delhi");
-    setActiveTab("ai_actions");
+    setSelectedAlertId("yashobhoomi_aviation");
+    setActiveTab("action_center");
     addToast(
-      "AI Recommendation Generated",
-      `Econometric pricing brain calibrated for ${event.name} (${event.date}).`
+      "Price Recommendation Ready",
+      `Calculated the best room prices for ${event.name} (${event.date}). Showing details now.`
     );
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden antialiased bg-[#0B132B] text-white font-body selection:bg-primary selection:text-[#0B132B]">
-      {/* 1. LEFT SIDEBAR NAVIGATION (Shared Component matching Google Stitch) */}
-      <aside className="relative flex h-full flex-col bg-[#111817] overflow-x-hidden w-64 flex-shrink-0 border-r border-[#3c5351] select-none">
-        <div className="flex h-full flex-col justify-between p-4">
-          <div className="flex flex-col gap-4">
-            {/* Brand Header */}
-            <div className="flex gap-3 items-center mb-4">
-              <div className="aspect-square rounded size-10 bg-surface border border-primary flex items-center justify-center shadow-[0_0_10px_rgba(46,196,182,0.3)]">
-                <span className="material-symbols-outlined text-primary text-[22px]">hotel_class</span>
-              </div>
-              <div className="flex flex-col min-w-0">
-                <h1 className="text-white text-base font-heading font-semibold leading-normal">
-                  RevCommand
-                </h1>
-                {/* Real Property Switcher */}
-                <select
-                  value={selectedProperty}
-                  onChange={(e) => {
-                    setSelectedProperty(e.target.value);
-                    addToast("Property Switched", `Active context: ${e.target.value}`);
-                  }}
-                  className="bg-transparent text-muted text-xs font-medium leading-normal outline-none cursor-pointer hover:text-white truncate"
-                >
-                  <option value="The Claridges New Delhi" className="bg-[#1C2541] text-white">
-                    The Claridges New Delhi (140k)
-                  </option>
-                  <option value="The Manor Friends Colony" className="bg-[#1C2541] text-white">
-                    The Manor New Delhi (45k)
-                  </option>
-                  <option value="Apex Luxury Portfolio" className="bg-[#1C2541] text-white">
-                    Apex Portfolio (All 5 Props)
-                  </option>
-                </select>
-              </div>
+    <div className="flex flex-col h-screen w-full overflow-hidden bg-[#0B132B] text-white font-body selection:bg-primary selection:text-[#0B132B]">
+      {/* 1. TOP HEADER (Simple, Friendly & Modern) */}
+      <header className="h-16 flex-shrink-0 bg-[#0B132B] border-b border-[#3A506B] px-6 flex items-center justify-between z-30 select-none">
+        {/* Left: Hotel Name & System Title */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="size-9 rounded bg-[#1C2541] border border-primary flex items-center justify-center shadow-[0_0_12px_rgba(46,196,182,0.3)]">
+              <span className="font-mono text-primary font-bold text-lg leading-none">₹</span>
             </div>
-
-            {/* Navigation Tabs */}
-            <nav className="flex flex-col gap-2">
-              {/* Tab 1: Overview */}
-              <button
-                onClick={() => setActiveTab("overview")}
-                className={`flex items-center gap-3 px-3 py-2 rounded transition-colors text-left w-full cursor-pointer ${
-                  activeTab === "overview"
-                    ? "bg-surface border-l-2 border-primary text-white"
-                    : "hover:bg-surface/50 text-muted hover:text-white"
-                }`}
-              >
-                <div className={activeTab === "overview" ? "text-primary" : "text-muted"}>
-                  <span
-                    className="material-symbols-outlined text-[20px]"
-                    style={{
-                      fontVariationSettings: activeTab === "overview" ? "'FILL' 1" : "'FILL' 0",
-                    }}
-                  >
-                    dashboard
-                  </span>
-                </div>
-                <p className="text-sm font-medium leading-normal">Overview</p>
-              </button>
-
-              {/* Tab 2: Matrix */}
-              <button
-                onClick={() => setActiveTab("matrix")}
-                className={`flex items-center gap-3 px-3 py-2 rounded transition-colors text-left w-full cursor-pointer ${
-                  activeTab === "matrix"
-                    ? "bg-surface border-l-2 border-primary text-white"
-                    : "hover:bg-surface/50 text-muted hover:text-white"
-                }`}
-              >
-                <div className={activeTab === "matrix" ? "text-primary" : "text-muted"}>
-                  <span className="material-symbols-outlined text-[20px]">grid_on</span>
-                </div>
-                <p className="text-sm font-medium leading-normal">Matrix</p>
-              </button>
-
-              {/* Tab 3: AI Actions */}
-              <button
-                onClick={() => setActiveTab("ai_actions")}
-                className={`flex items-center justify-between px-3 py-2 rounded transition-colors text-left w-full cursor-pointer ${
-                  activeTab === "ai_actions"
-                    ? "bg-surface border-l-2 border-primary text-white"
-                    : "hover:bg-surface/50 text-muted hover:text-white"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={activeTab === "ai_actions" ? "text-primary" : "text-muted"}>
-                    <span className="material-symbols-outlined text-[20px]">bolt</span>
-                  </div>
-                  <p className="text-sm font-medium leading-normal">AI Actions</p>
-                </div>
-                <span className="bg-intelligence text-background-base font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-sm">
-                  3
-                </span>
-              </button>
-
-              {/* Tab 4: Events */}
-              <button
-                onClick={() => setActiveTab("events")}
-                className={`flex items-center gap-3 px-3 py-2 rounded transition-colors text-left w-full cursor-pointer ${
-                  activeTab === "events"
-                    ? "bg-surface border-l-2 border-primary text-white"
-                    : "hover:bg-surface/50 text-muted hover:text-white"
-                }`}
-              >
-                <div className={activeTab === "events" ? "text-primary" : "text-muted"}>
-                  <span className="material-symbols-outlined text-[20px]">event</span>
-                </div>
-                <p className="text-sm font-medium leading-normal">Events</p>
-              </button>
-            </nav>
-          </div>
-
-          {/* Bottom Controls & User Profile */}
-          <div className="flex flex-col gap-4 mt-auto pt-4 border-t border-[#3A506B]/50">
-            {/* Live WhatsApp Copilot Simulator */}
-            <button
-              onClick={handleSimulateWhatsAppApproval}
-              disabled={simulatingWebhook}
-              className="bg-[#1C2541] hover:bg-[#2A375C] border border-[#3A506B] hover:border-primary text-white px-3 py-2 rounded text-xs font-mono flex items-center justify-between transition-all cursor-pointer shadow-sm group disabled:opacity-50"
-            >
+            <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span className="text-[11px]">WhatsApp Copilot</span>
+                <span className="text-white text-sm font-heading font-bold tracking-tight">
+                  Smart Hotel Pricing
+                </span>
+                <span className="px-1.5 py-0.2 bg-primary/10 text-primary border border-primary/30 font-mono text-[9px] font-bold rounded uppercase">
+                  Live & Connected
+                </span>
               </div>
-              <span className="text-[10px] text-primary group-hover:underline">
-                {simulatingWebhook ? "Syncing..." : "Simulate"}
+              <span className="text-muted text-[11px] font-mono tracking-normal">
+                Lemon Tree Premier, Delhi Airport (Aerocity) • 287 Rooms • Asset 6, Hospitality District
               </span>
-            </button>
-
-            {/* User Profile Card */}
-            <div className="flex items-center gap-3 px-2 py-1">
-              <div
-                className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-8 border border-primary/40"
-                style={{
-                  backgroundImage:
-                    "url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120')",
-                }}
-              />
-              <div className="flex flex-col min-w-0">
-                <p className="text-white text-sm font-medium leading-none truncate">
-                  Karandeep S. Talwar
-                </p>
-                <p className="text-muted text-[11px] mt-1 leading-none font-mono">
-                  Principal Revenue Architect
-                </p>
-              </div>
             </div>
           </div>
         </div>
-      </aside>
 
-      {/* 2. MAIN ACTIVE SCREEN */}
-      <main className="flex flex-1 h-full min-w-0 overflow-hidden relative">
-        {activeTab === "overview" && (
-          <GlobalOverview
-            onNavigateToTab={(tab, alertId) => {
-              if (alertId) setSelectedAlertId(alertId);
-              setActiveTab(tab);
-            }}
-            onQuickReview={handleQuickReview}
-          />
+        {/* Center: 3 Simple Tabs */}
+        <nav className="flex items-center gap-1 bg-[#1C2541] p-1 rounded-sm border border-[#3A506B]">
+          {/* Tab 1: Price Recommendations */}
+          <button
+            onClick={() => setActiveTab("action_center")}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-xs font-mono font-semibold transition-all cursor-pointer ${
+              activeTab === "action_center"
+                ? "bg-primary text-[#0B132B] shadow-[0_0_10px_rgba(46,196,182,0.35)]"
+                : "text-muted hover:text-white hover:bg-[#2A375C]"
+            }`}
+          >
+            <span className="material-symbols-outlined text-[16px]">lightbulb</span>
+            <span>Price Recommendations</span>
+            <span
+              className={`text-[10px] font-bold px-1.5 py-0.2 rounded-sm ${
+                activeTab === "action_center"
+                  ? "bg-[#0B132B] text-primary"
+                  : "bg-intelligence text-[#0B132B]"
+              }`}
+            >
+              3 new
+            </span>
+          </button>
+
+          {/* Tab 2: Nearby Hotel Prices */}
+          <button
+            onClick={() => setActiveTab("matrix")}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-xs font-mono font-semibold transition-all cursor-pointer ${
+              activeTab === "matrix"
+                ? "bg-primary text-[#0B132B] shadow-[0_0_10px_rgba(46,196,182,0.35)]"
+                : "text-muted hover:text-white hover:bg-[#2A375C]"
+            }`}
+          >
+            <span className="material-symbols-outlined text-[16px]">grid_on</span>
+            <span>Nearby Hotel Prices</span>
+          </button>
+
+          {/* Tab 3: City Events & Demand */}
+          <button
+            onClick={() => setActiveTab("events")}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-xs font-mono font-semibold transition-all cursor-pointer ${
+              activeTab === "events"
+                ? "bg-primary text-[#0B132B] shadow-[0_0_10px_rgba(46,196,182,0.35)]"
+                : "text-muted hover:text-white hover:bg-[#2A375C]"
+            }`}
+          >
+            <span className="material-symbols-outlined text-[16px]">location_on</span>
+            <span>City Events & Demand</span>
+          </button>
+        </nav>
+
+        {/* Right: Status & WhatsApp Test */}
+        <div className="flex items-center gap-3">
+          {/* Database Connected Badge */}
+          <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-mono bg-[#1C2541] border border-[#3A506B] text-muted px-2.5 py-1 rounded-sm">
+            <span className="size-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Database Connected</span>
+          </div>
+
+          {/* Booking Sites Connected Badge */}
+          <div className="hidden xl:flex items-center gap-1.5 text-[11px] font-mono bg-[#1C2541] border border-[#3A506B] text-muted px-2.5 py-1 rounded-sm">
+            <span className="size-1.5 rounded-full bg-primary"></span>
+            <span>OTAs Synced</span>
+          </div>
+
+          {/* WhatsApp Simulator Button */}
+          <button
+            onClick={handleSimulateWhatsAppApproval}
+            disabled={simulatingWebhook}
+            className="bg-[#1C2541] hover:bg-[#2A375C] border border-[#3A506B] hover:border-primary text-white px-3.5 py-1.5 rounded-sm text-xs font-mono flex items-center gap-2 transition-all cursor-pointer shadow-sm group disabled:opacity-50"
+            title="Simulates GM tapping 'Approve Rate' on their WhatsApp message"
+          >
+            <span className="size-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="text-[11px] font-bold">WhatsApp Test</span>
+            <span className="text-[10px] text-primary group-hover:underline">
+              {simulatingWebhook ? "Sending..." : "Approve ₹8,950"}
+            </span>
+          </button>
+        </div>
+      </header>
+
+      {/* 2. MAIN ACTIVE VIEW */}
+      <main className="flex flex-1 h-[calc(100vh-64px)] min-w-0 overflow-hidden relative">
+        {/* Tab 1: Price Recommendations */}
+        {activeTab === "action_center" && (
+          <div className="w-full h-full animate-in fade-in duration-200">
+            <AIActionCenter
+              selectedAlertId={selectedAlertId}
+              onBackToDashboard={() => setActiveTab("matrix")}
+              onSyncSuccess={(msg) => addToast("New Price Applied", msg)}
+            />
+          </div>
         )}
 
+        {/* Tab 2: Nearby Hotel Prices */}
         {activeTab === "matrix" && (
-          <CompetitorMatrix
-            onBack={() => setActiveTab("overview")}
-            onRateUpdated={(msg) => addToast("Matrix Rate Sync", msg)}
-          />
+          <div className="w-full h-full animate-in fade-in duration-200">
+            <CompetitorMatrix
+              onBack={() => setActiveTab("action_center")}
+              onRateUpdated={(msg) => addToast("Price Updated", msg)}
+            />
+          </div>
         )}
 
-        {activeTab === "ai_actions" && (
-          <AIActionCenter
-            selectedAlertId={selectedAlertId}
-            onBackToDashboard={() => setActiveTab("overview")}
-            onSyncSuccess={(msg) => addToast("Rate Updated & Pushed", msg)}
-          />
-        )}
-
+        {/* Tab 3: City Events & Demand */}
         {activeTab === "events" && (
-          <EventTimeline
-            onGeneratePricing={handleEventPricingJump}
-            onSelectEvent={(evt) => console.log("Selected event:", evt)}
-          />
+          <div className="w-full h-full animate-in fade-in duration-200">
+            <EventTimeline
+              onGeneratePricing={handleEventPricingJump}
+              onSelectEvent={(evt) => console.log("Selected event:", evt)}
+            />
+          </div>
         )}
       </main>
 
-      {/* 3. TOAST NOTIFICATIONS */}
+      {/* 3. NOTIFICATIONS */}
       <div className="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none">
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className="pointer-events-auto bg-[#1C2541] border border-primary/40 text-white px-4 py-3 rounded-md shadow-[0_10px_30px_rgba(0,0,0,0.8)] flex items-start space-x-3 w-84 animate-slide-in backdrop-blur-md"
+            className="pointer-events-auto bg-[#1C2541] border border-primary/50 text-white px-4 py-3 rounded-sm shadow-[0_10px_30px_rgba(0,0,0,0.8)] flex items-start space-x-3 w-96 animate-slide-in backdrop-blur-md"
           >
             <span className="material-symbols-outlined text-primary text-[20px] mt-0.5">
               check_circle
             </span>
             <div className="flex-1 min-w-0">
-              <h4 className="text-xs font-bold text-white font-mono">{toast.title}</h4>
-              <p className="text-[11px] text-muted mt-0.5 leading-tight">{toast.message}</p>
+              <h4 className="text-xs font-bold text-white font-mono tracking-wide">
+                {toast.title}
+              </h4>
+              <p className="text-[11px] text-muted mt-0.5 leading-relaxed font-body">
+                {toast.message}
+              </p>
             </div>
           </div>
         ))}

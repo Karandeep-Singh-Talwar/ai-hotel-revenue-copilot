@@ -26,60 +26,60 @@ interface EventTimelineProps {
 
 const INITIAL_EVENTS: EventItem[] = [
   {
-    id: "coldplay_delhi",
-    name: "Coldplay Live Tour 2026",
+    id: "yashobhoomi_aviation",
+    name: "Aviation India Expo & Trade Summit",
     date: "NOV 14",
-    venueName: "Jawaharlal Nehru Stadium",
-    lat: 28.5828,
-    lng: 77.2344,
-    impact: "High",
-    attendance: "65,000",
-    distance: "1.3 mi (2.1 km)",
-    demandForecast: "+42% Forecasted Demand",
-    icon: "stadium",
-    rawEventDate: "2026-11-14",
-  },
-  {
-    id: "tech_expo",
-    name: "India International Tech Expo",
-    date: "NOV 18",
-    venueName: "Bharat Mandapam (Pragati Maidan)",
-    lat: 28.6184,
-    lng: 77.2415,
-    impact: "High",
-    attendance: "42,000",
-    distance: "2.4 mi (3.8 km)",
-    demandForecast: "+28% Forecasted Demand",
-    icon: "business_center",
-    rawEventDate: "2026-11-18",
-  },
-  {
-    id: "delhi_marathon",
-    name: "Delhi Half Marathon 2026",
-    date: "NOV 24",
-    venueName: "JLN Stadium & Central Vista",
-    lat: 28.5828,
-    lng: 77.2344,
-    impact: "Medium",
-    attendance: "28,000",
-    distance: "1.3 mi (2.1 km)",
-    demandForecast: "+18% Forecasted Demand",
-    icon: "sports_score",
-    rawEventDate: "2026-11-24",
-  },
-  {
-    id: "fintech_summit",
-    name: "Global Fintech Summit 2026",
-    date: "DEC 02",
-    venueName: "Yashobhoomi IICC, Dwarka",
+    venueName: "Yashobhoomi IICC, Dwarka (Sector 25)",
     lat: 28.5524,
     lng: 77.0583,
     impact: "High",
-    attendance: "45,000",
-    distance: "11.5 mi (18.5 km)",
-    demandForecast: "+34% Forecasted Demand",
-    icon: "domain",
-    rawEventDate: "2026-12-02",
+    attendance: "48,000",
+    distance: "8.2 km (12 mins)",
+    demandForecast: "+42% more guests looking for rooms",
+    icon: "flight_takeoff",
+    rawEventDate: "2026-11-14",
+  },
+  {
+    id: "airport_transit_surge",
+    name: "IGI Airport Weekend Transit Peak",
+    date: "NOV 18",
+    venueName: "IGI Airport Terminal 3 (Aerocity Corridor)",
+    lat: 28.5562,
+    lng: 77.0855,
+    impact: "High",
+    attendance: "35,000",
+    distance: "3.2 km (5 mins)",
+    demandForecast: "+32% more guests looking for rooms",
+    icon: "connecting_airports",
+    rawEventDate: "2026-11-18",
+  },
+  {
+    id: "tech_expo_dwarka",
+    name: "Global EV & Clean Mobility Summit",
+    date: "NOV 22",
+    venueName: "Yashobhoomi Convention Center, Dwarka",
+    lat: 28.5524,
+    lng: 77.0583,
+    impact: "High",
+    attendance: "52,000",
+    distance: "8.2 km (12 mins)",
+    demandForecast: "+38% more guests looking for rooms",
+    icon: "electric_car",
+    rawEventDate: "2026-11-22",
+  },
+  {
+    id: "coldplay_delhi",
+    name: "Coldplay Live Tour 2026",
+    date: "NOV 28",
+    venueName: "Jawaharlal Nehru Stadium (via NH-48)",
+    lat: 28.5828,
+    lng: 77.2344,
+    impact: "Medium",
+    attendance: "65,000",
+    distance: "14.5 km away",
+    demandForecast: "+25% more guests looking for rooms",
+    icon: "stadium",
+    rawEventDate: "2026-11-28",
   },
 ];
 
@@ -100,7 +100,7 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
 
       if (json?.events && json.events.length > 0) {
         const mapped: EventItem[] = json.events.map((e: any) => {
-          const isHigh = e.expectedAttendance > 40000 || e.surgePercentage > 25;
+          const isHigh = e.expectedAttendance > 35000 || e.surgePercentage > 25;
           const isMed = e.expectedAttendance >= 15000 && !isHigh;
           const impact = isHigh ? "High" : isMed ? "Medium" : "Low";
 
@@ -115,17 +115,17 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
             name: e.name,
             date: dateStr.toUpperCase(),
             venueName: e.venueName,
-            lat: typeof e.lat === "number" ? e.lat : 28.5828,
-            lng: typeof e.lng === "number" ? e.lng : 77.2344,
+            lat: typeof e.lat === "number" ? e.lat : 28.5524,
+            lng: typeof e.lng === "number" ? e.lng : 77.0583,
             impact,
             attendance: e.expectedAttendance.toLocaleString("en-IN"),
-            distance: `${e.distanceMiles || 1.3} mi (${e.distanceKm || 2.1} km)`,
-            demandForecast: `+${e.surgePercentage || 24}% Forecasted Demand`,
+            distance: `${e.distanceKm || 8.2} km away`,
+            demandForecast: `+${e.surgePercentage || 28}% more guests looking for rooms`,
             icon:
               e.category?.includes("Concert") || e.category?.includes("Music")
                 ? "stadium"
-                : e.category?.includes("Medical")
-                ? "local_hospital"
+                : e.category?.includes("Aviation") || e.category?.includes("Airport")
+                ? "flight_takeoff"
                 : "business_center",
             rawEventDate: e.eventDate,
           };
@@ -178,8 +178,8 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
       date: e.date,
       attendance: e.attendance,
       impact: e.impact,
-      radiusMeters: e.impact === "High" ? 4500 : 3500,
-      demandForecast: e.demandForecast || "+24% Forecasted Demand",
+      radiusMeters: e.impact === "High" ? 5500 : 3500,
+      demandForecast: e.demandForecast || "+28% more guests looking for rooms",
       distanceToClaridges: e.distance,
     }));
   }, [events]);
@@ -196,24 +196,24 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
 
   return (
     <div className="flex flex-1 h-full w-full overflow-hidden bg-[#0B132B] text-white">
-      {/* Main Split-Pane matching Google Stitch */}
+      {/* Main Split-Pane */}
       <main className="flex-1 flex flex-col md:flex-row h-full overflow-hidden">
         {/* Left Pane: Timeline (50%) */}
         <section className="w-full md:w-1/2 flex flex-col h-full border-r border-[#3A506B] bg-[#0B132B]">
           {/* Header */}
           <header className="px-6 py-6 border-b border-[#3A506B]">
-            <h2 className="text-[32px] font-bold leading-tight font-heading mb-2">
-              Event Intelligence
+            <h2 className="text-2xl font-bold leading-tight font-heading mb-1">
+              Upcoming City Events & Demand
             </h2>
-            <p className="text-muted text-sm font-normal">
-              Correlate Delhi NCR city events with occupancy forecasting
+            <p className="text-muted text-xs font-normal">
+              Major expos at Yashobhoomi, airport flight surges, and Delhi summits driving bookings to Lemon Tree Aerocity
             </p>
 
             {/* Filters */}
-            <div className="flex gap-3 mt-4 flex-wrap">
+            <div className="flex gap-2.5 mt-4 flex-wrap">
               <button
                 onClick={() => setFilter("High")}
-                className={`flex h-8 items-center justify-center rounded px-3 transition-colors ${
+                className={`flex h-8 items-center justify-center rounded px-3 transition-colors cursor-pointer ${
                   filter === "High"
                     ? "bg-intelligence bg-opacity-10 border border-intelligence"
                     : "bg-surface border border-[#3A506B]"
@@ -224,13 +224,13 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
                     filter === "High" ? "text-intelligence" : "text-muted"
                   }`}
                 >
-                  High Impact
+                  High Demand
                 </p>
               </button>
 
               <button
                 onClick={() => setFilter("Medium")}
-                className={`flex h-8 items-center justify-center rounded px-3 transition-colors ${
+                className={`flex h-8 items-center justify-center rounded px-3 transition-colors cursor-pointer ${
                   filter === "Medium"
                     ? "bg-primary bg-opacity-10 border border-primary"
                     : "bg-surface border border-[#3A506B]"
@@ -241,13 +241,13 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
                     filter === "Medium" ? "text-primary" : "text-muted"
                   }`}
                 >
-                  Medium Impact
+                  Medium Demand
                 </p>
               </button>
 
               <button
                 onClick={() => setFilter("Low")}
-                className={`flex h-8 items-center justify-center rounded px-3 transition-colors ${
+                className={`flex h-8 items-center justify-center rounded px-3 transition-colors cursor-pointer ${
                   filter === "Low"
                     ? "bg-muted bg-opacity-20 border border-muted"
                     : "bg-surface border border-[#3A506B]"
@@ -258,13 +258,13 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
                     filter === "Low" ? "text-white" : "text-muted"
                   }`}
                 >
-                  Low Impact
+                  Low Demand
                 </p>
               </button>
 
               <button
                 onClick={() => setFilter("all")}
-                className={`flex h-8 items-center justify-center rounded px-3 transition-colors ${
+                className={`flex h-8 items-center justify-center rounded px-3 transition-colors cursor-pointer ${
                   filter === "all"
                     ? "bg-highlight border border-border"
                     : "bg-surface border border-[#3A506B]"
@@ -334,7 +334,7 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <p className="text-xs text-primary font-mono mb-1">{event.date}</p>
-                          <h3 className="text-lg font-bold text-white font-heading">{event.name}</h3>
+                          <h3 className="text-base font-bold text-white font-heading">{event.name}</h3>
                           <p className="text-xs text-muted font-mono">{event.venueName}</p>
                         </div>
                         <span
@@ -344,26 +344,26 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
                               : "bg-primary bg-opacity-10 text-primary border-primary font-medium"
                           }`}
                         >
-                          {event.impact.toUpperCase()} IMPACT
+                          {isHigh ? "HIGH DEMAND" : "STEADY DEMAND"}
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4 mt-4">
+                      <div className="grid grid-cols-2 gap-4 mt-3">
                         <div>
-                          <p className="text-xs text-muted mb-1 font-mono">Expected Attendance</p>
+                          <p className="text-xs text-muted mb-0.5 font-mono">Expected Footfall</p>
                           <p className="text-sm font-mono text-white font-bold">
-                            {event.attendance}
+                            {event.attendance} people
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted mb-1 font-mono">Distance to Claridges</p>
+                          <p className="text-xs text-muted mb-0.5 font-mono">Distance to Aerocity</p>
                           <p className="text-sm font-mono text-white font-bold">{event.distance}</p>
                         </div>
                       </div>
 
                       {event.demandForecast && (
-                        <div className="mt-4 pt-4 border-t border-[#3A506B] flex justify-between items-center">
-                          <div className="flex items-center gap-2 text-primary font-mono text-xs font-bold">
+                        <div className="mt-4 pt-3 border-t border-[#3A506B] flex justify-between items-center">
+                          <div className="flex items-center gap-1.5 text-primary font-mono text-xs font-bold">
                             <span className="material-symbols-outlined text-sm">trending_up</span>
                             <span>{event.demandForecast}</span>
                           </div>
@@ -373,9 +373,9 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
                               handleGenerateClick(event);
                             }}
                             disabled={generatingId === event.id}
-                            className="bg-primary hover:bg-[#15bfae] text-background-base px-3 py-1.5 rounded text-xs font-bold font-mono transition-all shadow-[0_0_10px_rgba(46,196,182,0.3)] disabled:opacity-50"
+                            className="bg-primary hover:bg-[#15bfae] text-background-base px-3 py-1.5 rounded text-xs font-bold font-mono transition-all shadow-[0_0_10px_rgba(46,196,182,0.3)] disabled:opacity-50 cursor-pointer"
                           >
-                            {generatingId === event.id ? "Analyzing..." : "Generate Pricing"}
+                            {generatingId === event.id ? "Calculating..." : "Calculate Best Price"}
                           </button>
                         </div>
                       )}
@@ -387,10 +387,10 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
           </div>
         </section>
 
-        {/* Right Pane: Tactical Real Leaflet Event Map (50%) */}
+        {/* Right Pane: Interactive Map (50%) */}
         <section className="hidden md:flex md:w-1/2 relative h-full overflow-hidden bg-[#050914] border-l border-[#3A506B]">
           <TacticalMapWrapper
-            center={[active?.lat || 28.5828, active?.lng || 77.2344]}
+            center={[active?.lat || 28.5505, active?.lng || 77.1215]}
             zoom={13}
             focusedLocation={focusedLocation}
             activeEventId={active?.id}
@@ -410,19 +410,19 @@ export default function EventTimeline({ onSelectEvent, onGeneratePricing }: Even
             }}
           />
 
-          {/* Tactical Active Venue Surveillance HUD Overlay */}
+          {/* Active Event Overlay Box */}
           {active && (
             <div className="absolute top-16 left-4 bg-surface/95 border border-intelligence px-3.5 py-2.5 rounded shadow-2xl backdrop-blur-md z-[400] max-w-sm pointer-events-none">
               <div className="flex items-center gap-1.5 mb-1">
-                <span className="material-symbols-outlined text-intelligence text-base animate-pulse">radar</span>
+                <span className="material-symbols-outlined text-intelligence text-base animate-pulse">location_on</span>
                 <span className="font-mono text-[10px] uppercase font-bold text-intelligence tracking-wider">
-                  Tactical Surveillance Focus
+                  Selected Event
                 </span>
               </div>
               <h4 className="font-heading text-sm font-bold text-white truncate">{active.name}</h4>
               <p className="text-[11px] text-primary font-mono">{active.venueName}</p>
               <div className="flex items-center gap-4 mt-2 text-[11px] font-mono text-muted">
-                <span>Expected: <strong className="text-white">{active.attendance}</strong></span>
+                <span>Footfall: <strong className="text-white">{active.attendance}</strong></span>
                 <span>Distance: <strong className="text-white">{active.distance}</strong></span>
               </div>
               {active.demandForecast && (

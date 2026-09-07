@@ -65,149 +65,135 @@ export interface MapEvent {
   distanceToClaridges: string;
 }
 
-// Default Live Delhi NCR Data
+// Default Live Aerocity & Delhi NCR Data
 export const DEFAULT_PROPERTIES: MapHotel[] = [
   {
-    id: "claridges",
-    name: "The Claridges New Delhi",
-    lat: 28.5998,
-    lng: 77.2185,
-    address: "12 Dr APJ Abdul Kalam Rd, Motilal Nehru Marg Area",
-    currentRate: 7200,
-    suggestedRate: 8950,
-    occupancy: 78,
-    revpar: 5616,
+    id: "lemontree_aerocity",
+    name: "Lemon Tree Premier, Delhi Airport",
+    lat: 28.5505,
+    lng: 77.1215,
+    address: "Asset No. 6, Aerocity Hospitality District, New Delhi",
+    currentRate: 5800,
+    suggestedRate: 7200,
+    occupancy: 75,
+    revpar: 4350,
     isPrimary: true,
     surgeActive: true,
-    alert: "Coldplay Live & Tech Expo surge. Suggested +24.3% rate rec.",
-    actionId: "coldplay_delhi",
-  },
-  {
-    id: "manor",
-    name: "The Manor New Delhi",
-    lat: 28.5632,
-    lng: 77.2654,
-    address: "77 Friends Colony West, New Delhi",
-    currentRate: 5900,
-    suggestedRate: 6450,
-    occupancy: 84,
-    revpar: 4956,
-    isPrimary: false,
-    surgeActive: false,
-    alert: "Corporate steady weekend demand. +9.3% optimization.",
+    alert: "Aviation India Expo @ Yashobhoomi driving Aerocity demand. +24.1% rate rec.",
+    actionId: "yashobhoomi_aviation",
   },
 ];
 
 export const DEFAULT_COMPETITORS: MapCompetitor[] = [
   {
-    id: "imperial",
-    name: "The Imperial New Delhi",
-    lat: 28.6239,
-    lng: 77.2188,
-    address: "Janpath, Connaught Place",
-    rate: 9950,
+    id: "aloft",
+    name: "Aloft New Delhi Aerocity",
+    lat: 28.5512,
+    lng: 77.1230,
+    address: "5B Hospitality District, Aerocity",
+    rate: 8400,
     ota: "MakeMyTrip",
-    status: "Surging (+38% vs baseline)",
+    status: "Price Raised (+12%)",
     isUndercut: false,
   },
   {
-    id: "lodhi",
-    name: "The Lodhi New Delhi",
-    lat: 28.5934,
-    lng: 77.2384,
-    address: "Lodhi Road, CGO Complex",
-    rate: 18500,
+    id: "holiday_inn",
+    name: "Holiday Inn Express Aerocity",
+    lat: 28.5520,
+    lng: 77.1205,
+    address: "Asset Area 12, Aerocity",
+    rate: 6900,
     ota: "Booking.com",
-    status: "High Demand (+12%)",
+    status: "Price Raised (+8%)",
     isUndercut: false,
   },
   {
-    id: "oberoi",
-    name: "The Oberoi New Delhi",
-    lat: 28.5989,
-    lng: 77.2392,
-    address: "Dr Zakir Hussain Marg",
-    rate: 22000,
+    id: "novotel",
+    name: "Novotel New Delhi Aerocity",
+    lat: 28.5495,
+    lng: 77.1225,
+    address: "Asset No 2, Aerocity",
+    rate: 9200,
     ota: "Agoda",
-    status: "Sold Out (92% Occ)",
+    status: "High Demand (+15%)",
     isUndercut: false,
   },
   {
-    id: "taj_mansingh",
-    name: "Taj Mansingh New Delhi",
-    lat: 28.6047,
-    lng: 77.2248,
-    address: "1 Mansingh Road",
-    rate: 15200,
+    id: "pullman",
+    name: "Pullman New Delhi Aerocity",
+    lat: 28.5492,
+    lng: 77.1220,
+    address: "Asset No 2, Aerocity",
+    rate: 12800,
     ota: "MakeMyTrip",
-    status: "Surging (+28% next weekend)",
+    status: "High Demand (+10%)",
     isUndercut: false,
   },
   {
-    id: "bloomrooms",
-    name: "Bloomrooms @ Janpath",
-    lat: 28.6251,
-    lng: 77.2178,
-    address: "Janpath, CP",
-    rate: 4200,
-    ota: "Goibibo",
-    status: "Undercutting Standard Tier (-15%)",
+    id: "ibis",
+    name: "Ibis New Delhi Aerocity",
+    lat: 28.5488,
+    lng: 77.1235,
+    address: "Asset No 9, Aerocity",
+    rate: 4600,
+    ota: "MakeMyTrip",
+    status: "Steady Price (0%)",
     isUndercut: true,
   },
 ];
 
 export const DEFAULT_EVENTS: MapEvent[] = [
   {
-    id: "coldplay_delhi",
-    name: "Coldplay Live Tour 2026",
-    venueName: "Jawaharlal Nehru Stadium",
-    lat: 28.5828,
-    lng: 77.2344,
-    date: "Nov 14 - 16, 2026",
-    attendance: "65,000 / day",
-    impact: "High",
-    radiusMeters: 4500,
-    demandForecast: "+42% Surge Expected",
-    distanceToClaridges: "2.1 km",
-  },
-  {
-    id: "tech_expo",
-    name: "India International Tech Expo",
-    venueName: "Bharat Mandapam, Pragati Maidan",
-    lat: 28.6184,
-    lng: 77.2415,
-    date: "Nov 18 - 20, 2026",
-    attendance: "35,000 delegates",
-    impact: "High",
-    radiusMeters: 5000,
-    demandForecast: "+28% Corporate Inflow",
-    distanceToClaridges: "3.8 km",
-  },
-  {
-    id: "delhi_marathon",
-    name: "Delhi Half Marathon 2026",
-    venueName: "JLN Stadium & Central Vista",
-    lat: 28.5828,
-    lng: 77.2344,
-    date: "Nov 24, 2026",
-    attendance: "28,000 runners",
-    impact: "Medium",
-    radiusMeters: 3500,
-    demandForecast: "+18% Weekend Bump",
-    distanceToClaridges: "2.1 km",
-  },
-  {
-    id: "fintech_summit",
-    name: "Global Fintech Summit 2026",
+    id: "yashobhoomi_aviation",
+    name: "Aviation India Expo & Trade Summit",
     venueName: "Yashobhoomi IICC, Dwarka",
     lat: 28.5524,
     lng: 77.0583,
-    date: "Dec 02 - 04, 2026",
-    attendance: "45,000 attendees",
+    date: "Nov 14 - 16, 2026",
+    attendance: "48,000 / day",
     impact: "High",
-    radiusMeters: 6000,
-    demandForecast: "Aerocity spillover into Central Delhi",
-    distanceToClaridges: "18.5 km",
+    radiusMeters: 5500,
+    demandForecast: "+42% Demand Expected",
+    distanceToClaridges: "8.2 km",
+  },
+  {
+    id: "airport_transit_surge",
+    name: "IGI Airport Weekend Transit Peak",
+    venueName: "IGI Airport Terminal 3",
+    lat: 28.5562,
+    lng: 77.0855,
+    date: "Nov 18 - 20, 2026",
+    attendance: "35,000 transit",
+    impact: "High",
+    radiusMeters: 4500,
+    demandForecast: "+32% Inflow",
+    distanceToClaridges: "3.2 km",
+  },
+  {
+    id: "tech_expo_dwarka",
+    name: "Global EV & Clean Mobility Summit",
+    venueName: "Yashobhoomi Convention Center",
+    lat: 28.5524,
+    lng: 77.0583,
+    date: "Nov 22 - 25, 2026",
+    attendance: "52,000 delegates",
+    impact: "High",
+    radiusMeters: 5500,
+    demandForecast: "+38% Corporate Inflow",
+    distanceToClaridges: "8.2 km",
+  },
+  {
+    id: "coldplay_delhi",
+    name: "Coldplay Live Tour 2026",
+    venueName: "JLN Stadium (via NH-48)",
+    lat: 28.5828,
+    lng: 77.2344,
+    date: "Nov 28, 2026",
+    attendance: "65,000 attendees",
+    impact: "Medium",
+    radiusMeters: 4500,
+    demandForecast: "+25% Weekend Bump",
+    distanceToClaridges: "14.5 km",
   },
 ];
 
@@ -262,7 +248,7 @@ function MapController({
 
 // Custom UI Overlay for Zooming and Centering
 function MapControlButtons({
-  defaultCenter = [28.604, 77.222],
+  defaultCenter = [28.5505, 77.1215],
 }: {
   defaultCenter?: [number, number];
 }) {
@@ -273,21 +259,21 @@ function MapControlButtons({
       <button
         onClick={() => map.zoomIn()}
         title="Zoom In"
-        className="w-8 h-8 bg-surface/95 border border-[#3A506B] rounded flex items-center justify-center text-white hover:bg-[#2A375C] hover:border-primary transition-all shadow-xl active:scale-95"
+        className="w-8 h-8 bg-surface/95 border border-[#3A506B] rounded flex items-center justify-center text-white hover:bg-[#2A375C] hover:border-primary transition-all shadow-xl active:scale-95 cursor-pointer"
       >
         <span className="material-symbols-outlined text-[18px]">add</span>
       </button>
       <button
         onClick={() => map.zoomOut()}
         title="Zoom Out"
-        className="w-8 h-8 bg-surface/95 border border-[#3A506B] rounded flex items-center justify-center text-white hover:bg-[#2A375C] hover:border-primary transition-all shadow-xl active:scale-95"
+        className="w-8 h-8 bg-surface/95 border border-[#3A506B] rounded flex items-center justify-center text-white hover:bg-[#2A375C] hover:border-primary transition-all shadow-xl active:scale-95 cursor-pointer"
       >
         <span className="material-symbols-outlined text-[18px]">remove</span>
       </button>
       <button
         onClick={() => map.flyTo(defaultCenter, 13, { duration: 1.2 })}
-        title="Center Central Delhi"
-        className="w-8 h-8 bg-surface/95 border border-[#3A506B] rounded flex items-center justify-center text-primary hover:bg-[#2A375C] hover:border-primary transition-all shadow-xl active:scale-95"
+        title="Center Aerocity Delhi"
+        className="w-8 h-8 bg-surface/95 border border-[#3A506B] rounded flex items-center justify-center text-primary hover:bg-[#2A375C] hover:border-primary transition-all shadow-xl active:scale-95 cursor-pointer"
       >
         <span className="material-symbols-outlined text-[16px]">my_location</span>
       </button>
@@ -296,7 +282,7 @@ function MapControlButtons({
 }
 
 export default function TacticalDarkMap({
-  center = [28.604, 77.222], // Central Delhi NCR (India Gate / APJ Kalam corridor)
+  center = [28.5505, 77.1215], // Aerocity Hospitality District, New Delhi
   zoom = 13,
   focusedLocation,
   activeEventId,
@@ -410,61 +396,61 @@ export default function TacticalDarkMap({
 
             <button
               onClick={() => setFilterHotels((v) => !v)}
-              className={`px-2 py-0.5 rounded font-mono text-xs flex items-center gap-1.5 transition-colors ${
+              className={`px-2 py-0.5 rounded font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
                 filterHotels
                   ? "bg-primary/20 text-primary border border-primary/40 font-bold"
                   : "text-muted hover:text-white border border-transparent"
               }`}
             >
               <span className="w-2 h-2 rounded-sm bg-primary"></span>
-              Our Hotels ({properties.length})
+              The Claridges
             </button>
 
             <button
               onClick={() => setFilterCompSet((v) => !v)}
-              className={`px-2 py-0.5 rounded font-mono text-xs flex items-center gap-1.5 transition-colors ${
+              className={`px-2 py-0.5 rounded font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
                 filterCompSet
                   ? "bg-[#3A506B]/50 text-white border border-[#3A506B] font-bold"
                   : "text-muted hover:text-white border border-transparent"
               }`}
             >
               <span className="w-2 h-2 rounded-sm bg-slate-400"></span>
-              Comp Set ({competitors.length})
+              Nearby Hotels ({competitors.length})
             </button>
 
             <button
               onClick={() => setFilterEvents((v) => !v)}
-              className={`px-2 py-0.5 rounded font-mono text-xs flex items-center gap-1.5 transition-colors ${
+              className={`px-2 py-0.5 rounded font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
                 filterEvents
                   ? "bg-intelligence/20 text-intelligence border border-intelligence/40 font-bold"
                   : "text-muted hover:text-white border border-transparent"
               }`}
             >
               <span className="w-2 h-2 rounded-full bg-intelligence"></span>
-              Events ({events.length})
+              City Events ({events.length})
             </button>
 
             <button
               onClick={() => setFilterRadii((v) => !v)}
-              className={`px-2 py-0.5 rounded font-mono text-xs flex items-center gap-1.5 transition-colors ${
+              className={`px-2 py-0.5 rounded font-mono text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
                 filterRadii
                   ? "bg-intelligence/15 text-intelligence border border-intelligence/30 font-medium"
                   : "text-muted hover:text-white border border-transparent"
               }`}
             >
-              <span className="material-symbols-outlined text-[13px]">radar</span>
-              Surge Radii
+              <span className="material-symbols-outlined text-[13px]">location_on</span>
+              Demand Area
             </button>
           </div>
 
-          {/* Tactical Status Tag */}
+          {/* Map Location Tag */}
           <div className="hidden lg:flex items-center gap-2 bg-surface/90 backdrop-blur-md border border-[#3A506B] px-3 py-1.5 rounded shadow-xl font-mono text-[11px] pointer-events-auto">
             <span className="text-primary font-bold flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">satellite_alt</span>
-              DELHI NCR GRID
+              <span className="material-symbols-outlined text-[14px]">map</span>
+              DELHI NCR
             </span>
             <span className="text-muted">|</span>
-            <span className="text-muted">28.5998° N, 77.2185° E</span>
+            <span className="text-muted">Central Delhi</span>
           </div>
         </div>
       )}
@@ -551,11 +537,11 @@ export default function TacticalDarkMap({
               <div className="p-3 w-64 text-white">
                 <div className="flex items-center justify-between pb-1.5 border-b border-[#3A506B]">
                   <span className="font-mono text-[10px] uppercase font-bold text-primary tracking-wider">
-                    {hotel.isPrimary ? "Primary Property" : "Portfolio Property"}
+                    Your Hotel
                   </span>
                   {hotel.surgeActive && (
                     <span className="bg-intelligence/20 text-intelligence font-mono text-[9px] font-bold px-1.5 py-0.5 rounded">
-                      SURGE ACTIVE
+                      HIGH DEMAND
                     </span>
                   )}
                 </div>
@@ -569,23 +555,23 @@ export default function TacticalDarkMap({
 
                 <div className="grid grid-cols-2 gap-2 bg-[#0B132B] p-2 rounded border border-[#3A506B] mb-2.5">
                   <div>
-                    <span className="text-[10px] text-muted font-mono block">Current Rate</span>
+                    <span className="text-[10px] text-muted font-mono block">Your Price</span>
                     <span className="font-mono text-xs font-bold text-white">
                       ₹{hotel.currentRate.toLocaleString("en-IN")}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-muted font-mono block">AI Suggested</span>
+                    <span className="text-[10px] text-muted font-mono block">Recommended</span>
                     <span className="font-mono text-xs font-bold text-primary">
                       ₹{hotel.suggestedRate?.toLocaleString("en-IN") || "-"}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-muted font-mono block">Occupancy</span>
+                    <span className="text-[10px] text-muted font-mono block">Rooms Booked</span>
                     <span className="font-mono text-xs font-bold text-white">{hotel.occupancy}%</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-muted font-mono block">RevPAR</span>
+                    <span className="text-[10px] text-muted font-mono block">Rev/Room</span>
                     <span className="font-mono text-xs font-bold text-white">
                       ₹{hotel.revpar.toLocaleString("en-IN")}
                     </span>
@@ -604,9 +590,9 @@ export default function TacticalDarkMap({
                       if (onQuickReview) onQuickReview(hotel.actionId!);
                       else if (onNavigateToTab) onNavigateToTab("ai_actions", hotel.actionId);
                     }}
-                    className="w-full py-1.5 bg-intelligence hover:bg-[#e08910] text-background-base font-mono text-[11px] font-bold uppercase rounded transition-colors"
+                    className="w-full py-1.5 bg-intelligence hover:bg-[#e08910] text-background-base font-mono text-[11px] font-bold uppercase rounded transition-colors cursor-pointer"
                   >
-                    Review Action Strategy
+                    View Recommended Price
                   </button>
                 )}
               </div>
@@ -625,7 +611,7 @@ export default function TacticalDarkMap({
               <div className="p-3 w-60 text-white">
                 <div className="flex items-center justify-between pb-1.5 border-b border-[#3A506B]">
                   <span className="font-mono text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                    Competitor Intelligence
+                    Nearby Hotel
                   </span>
                   <span className="bg-[#3A506B]/40 text-slate-300 font-mono text-[9px] px-1.5 py-0.5 rounded">
                     {comp.ota}
@@ -636,7 +622,7 @@ export default function TacticalDarkMap({
                 <p className="text-[11px] text-muted font-mono mb-2">{comp.address}</p>
 
                 <div className="flex justify-between items-center bg-[#0B132B] p-2 rounded border border-[#3A506B] mb-2">
-                  <span className="text-xs text-muted font-mono">Scraped Rate:</span>
+                  <span className="text-xs text-muted font-mono">Current Price:</span>
                   <span className="font-mono text-sm font-bold text-white">
                     ₹{comp.rate.toLocaleString("en-IN")}
                   </span>
@@ -653,9 +639,9 @@ export default function TacticalDarkMap({
                 {onNavigateToTab && (
                   <button
                     onClick={() => onNavigateToTab("matrix")}
-                    className="w-full py-1 bg-surface hover:bg-[#2A375C] border border-[#3A506B] text-white font-mono text-[10px] font-bold uppercase rounded transition-colors"
+                    className="w-full py-1 bg-surface hover:bg-[#2A375C] border border-[#3A506B] text-white font-mono text-[10px] font-bold uppercase rounded transition-colors cursor-pointer"
                   >
-                    View in Matrix
+                    Compare in Price Matrix
                   </button>
                 )}
               </div>
@@ -681,10 +667,10 @@ export default function TacticalDarkMap({
                 <div className="p-3 w-64 text-white">
                   <div className="flex items-center justify-between pb-1.5 border-b border-[#3A506B]">
                     <span className="font-mono text-[10px] uppercase font-bold text-intelligence tracking-wider">
-                      Live Surge Event
+                      City Event
                     </span>
                     <span className="bg-intelligence/20 text-intelligence font-mono text-[9px] font-bold px-1.5 py-0.5 rounded">
-                      {event.impact} IMPACT
+                      {event.impact === "High" ? "HIGH DEMAND" : "STEADY DEMAND"}
                     </span>
                   </div>
 
@@ -701,7 +687,7 @@ export default function TacticalDarkMap({
                       <span className="text-intelligence font-bold">{event.attendance}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted">To Claridges:</span>
+                      <span className="text-muted">To Hotel:</span>
                       <span className="text-white font-bold">{event.distanceToClaridges}</span>
                     </div>
                   </div>
@@ -714,9 +700,9 @@ export default function TacticalDarkMap({
                     onClick={() => {
                       if (onNavigateToTab) onNavigateToTab("ai_actions", event.id);
                     }}
-                    className="w-full py-1.5 bg-intelligence hover:bg-[#e08910] text-background-base font-mono text-[11px] font-bold uppercase rounded transition-colors"
+                    className="w-full py-1.5 bg-intelligence hover:bg-[#e08910] text-background-base font-mono text-[11px] font-bold uppercase rounded transition-colors cursor-pointer"
                   >
-                    Generate Event Pricing Strategy
+                    Calculate Best Price
                   </button>
                 </div>
               </Popup>

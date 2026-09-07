@@ -1,7 +1,7 @@
 /**
  * Rates Matrix API Endpoint (/api/rates/matrix)
- * Provides multi-channel pricing grid data (Agoda, Booking.com, MakeMyTrip)
- * and 14-day historical competitor pricing telemetry for the slide-out drawer.
+ * Provides multi-channel pricing grid data (MakeMyTrip, Booking.com, Agoda)
+ * for Lemon Tree Premier, Aerocity New Delhi and its Aerocity comp-set.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const hotelId = searchParams.get("hotelId") || "1";
+  const roomType = searchParams.get("roomType") || "superior";
 
   // Base dates (today + 7 days rolling)
   const today = new Date();
@@ -18,138 +19,96 @@ export async function GET(req: NextRequest) {
     return d.toISOString().split("T")[0];
   });
 
+  // Base rate multiplier by room type
+  const roomMultipliers: Record<string, number> = {
+    superior: 1.0,
+    deluxe: 1.19,
+    executive: 1.47,
+    suite: 2.15,
+  };
+  const multiplier = roomMultipliers[roomType] || 1.0;
+  const baseRate = Math.round(5800 * multiplier);
+
   // Client hotel rate baseline
   const myHotel = {
     id: 1,
-    name: "The Claridges New Delhi",
-    standardRate: 7200,
+    name: "Lemon Tree Premier, Aerocity",
+    standardRate: baseRate,
     ratesByDate: {
-      [dates[0]]: 7200,
-      [dates[1]]: 7200,
-      [dates[2]]: 7400,
-      [dates[3]]: 7400,
-      [dates[4]]: 8100, // Weekend
-      [dates[5]]: 8100, // Weekend
-      [dates[6]]: 7500,
+      [dates[0]]: baseRate,
+      [dates[1]]: baseRate,
+      [dates[2]]: Math.round(baseRate * 1.05),
+      [dates[3]]: Math.round(baseRate * 1.05),
+      [dates[4]]: Math.round(baseRate * 1.15), // Weekend
+      [dates[5]]: Math.round(baseRate * 1.15), // Weekend
+      [dates[6]]: Math.round(baseRate * 1.08),
     },
   };
 
-  // Competitor rates across channels
+  // Competitor rates across Aerocity hospitality cluster
   const competitors = [
     {
       id: 101,
-      name: "The Imperial New Delhi",
+      name: "Aloft New Delhi Aerocity",
       starRating: 5,
-      reviewScore: 9.2,
+      reviewScore: 8.9,
       channels: {
-        Agoda: { rate: 9800, rawRoom: "Heritage Classic Double" },
-        "Booking.com": { rate: 10200, rawRoom: "Deluxe King Room" },
-        MakeMyTrip: { rate: 9950, rawRoom: "Executive Heritage Room" },
+        MakeMyTrip: { rate: Math.round(8400 * multiplier), rawRoom: "Aloft Room" },
+        "Booking.com": { rate: Math.round(8650 * multiplier), rawRoom: "Breezy Room" },
+        Agoda: { rate: Math.round(8350 * multiplier), rawRoom: "Aloft King" },
       },
-      // 14-day historical trend
-      history14Days: [
-        { day: "Day -13", competitorRate: 9200, myRate: 7000 },
-        { day: "Day -11", competitorRate: 9350, myRate: 7000 },
-        { day: "Day -9", competitorRate: 9100, myRate: 7100 },
-        { day: "Day -7", competitorRate: 9600, myRate: 7100 },
-        { day: "Day -5", competitorRate: 9900, myRate: 7200 },
-        { day: "Day -3", competitorRate: 10100, myRate: 7200 },
-        { day: "Day -1", competitorRate: 9800, myRate: 7200 },
-        { day: "Today", competitorRate: 9950, myRate: 7200 },
-      ],
     },
     {
       id: 102,
-      name: "The Lodhi New Delhi",
-      starRating: 5,
-      reviewScore: 9.4,
+      name: "Holiday Inn Express Aerocity",
+      starRating: 4,
+      reviewScore: 8.7,
       channels: {
-        Agoda: { rate: 12500, rawRoom: "Lodhi Room Plunge Pool" },
-        "Booking.com": { rate: 12900, rawRoom: "Lodhi Deluxe King" },
-        MakeMyTrip: { rate: 12400, rawRoom: "Lodhi Premier Room" },
+        MakeMyTrip: { rate: Math.round(6900 * multiplier), rawRoom: "Standard Room" },
+        "Booking.com": { rate: Math.round(7100 * multiplier), rawRoom: "Queen Bed Standard" },
+        Agoda: { rate: Math.round(6850 * multiplier), rawRoom: "Standard Twin" },
       },
-      history14Days: [
-        { day: "Day -13", competitorRate: 11800, myRate: 7000 },
-        { day: "Day -11", competitorRate: 12000, myRate: 7000 },
-        { day: "Day -9", competitorRate: 12100, myRate: 7100 },
-        { day: "Day -7", competitorRate: 12400, myRate: 7100 },
-        { day: "Day -5", competitorRate: 12700, myRate: 7200 },
-        { day: "Day -3", competitorRate: 12850, myRate: 7200 },
-        { day: "Day -1", competitorRate: 12900, myRate: 7200 },
-        { day: "Today", competitorRate: 12600, myRate: 7200 },
-      ],
     },
     {
       id: 103,
-      name: "The Oberoi New Delhi",
+      name: "Novotel New Delhi Aerocity",
       starRating: 5,
-      reviewScore: 9.6,
+      reviewScore: 8.8,
       channels: {
-        Agoda: { rate: 13900, rawRoom: "Deluxe Golf View" },
-        "Booking.com": { rate: 14200, rawRoom: "Premier Room City View" },
-        MakeMyTrip: { rate: 13800, rawRoom: "Luxury King" },
+        MakeMyTrip: { rate: Math.round(9200 * multiplier), rawRoom: "Superior Room" },
+        "Booking.com": { rate: Math.round(9450 * multiplier), rawRoom: "Superior King" },
+        Agoda: { rate: Math.round(9150 * multiplier), rawRoom: "Superior Room City View" },
       },
-      history14Days: [
-        { day: "Day -13", competitorRate: 13200, myRate: 7000 },
-        { day: "Day -11", competitorRate: 13500, myRate: 7000 },
-        { day: "Day -9", competitorRate: 13400, myRate: 7100 },
-        { day: "Day -7", competitorRate: 13800, myRate: 7100 },
-        { day: "Day -5", competitorRate: 14100, myRate: 7200 },
-        { day: "Day -3", competitorRate: 14200, myRate: 7200 },
-        { day: "Day -1", competitorRate: 14000, myRate: 7200 },
-        { day: "Today", competitorRate: 13950, myRate: 7200 },
-      ],
     },
     {
       id: 104,
-      name: "Taj Mahal Hotel (Mansingh)",
+      name: "Pullman New Delhi Aerocity",
       starRating: 5,
       reviewScore: 9.1,
       channels: {
-        Agoda: { rate: 10800, rawRoom: "Superior City View" },
-        "Booking.com": { rate: 11200, rawRoom: "Deluxe King Room" },
-        MakeMyTrip: { rate: 10900, rawRoom: "Taj Club Executive" },
+        MakeMyTrip: { rate: Math.round(12800 * multiplier), rawRoom: "Deluxe King Room" },
+        "Booking.com": { rate: Math.round(13200 * multiplier), rawRoom: "Deluxe Room" },
+        Agoda: { rate: Math.round(12650 * multiplier), rawRoom: "Deluxe King" },
       },
-      history14Days: [
-        { day: "Day -13", competitorRate: 10200, myRate: 7000 },
-        { day: "Day -11", competitorRate: 10400, myRate: 7000 },
-        { day: "Day -9", competitorRate: 10500, myRate: 7100 },
-        { day: "Day -7", competitorRate: 10900, myRate: 7100 },
-        { day: "Day -5", competitorRate: 11100, myRate: 7200 },
-        { day: "Day -3", competitorRate: 11300, myRate: 7200 },
-        { day: "Day -1", competitorRate: 11000, myRate: 7200 },
-        { day: "Today", competitorRate: 10950, myRate: 7200 },
-      ],
     },
     {
       id: 105,
-      name: "Bloomrooms @ Janpath",
+      name: "Ibis New Delhi Aerocity",
       starRating: 3,
-      reviewScore: 8.3,
+      reviewScore: 8.2,
       channels: {
-        Agoda: { rate: 4200, rawRoom: "Queen Standard Non-Smoking" },
-        "Booking.com": { rate: 4500, rawRoom: "Standard Room" },
-        MakeMyTrip: { rate: 4100, rawRoom: "Value Queen" },
+        MakeMyTrip: { rate: Math.round(4600 * multiplier), rawRoom: "Standard Room" },
+        "Booking.com": { rate: Math.round(4750 * multiplier), rawRoom: "Queen Room" },
+        Agoda: { rate: Math.round(4550 * multiplier), rawRoom: "Standard Room" },
       },
-      history14Days: [
-        { day: "Day -13", competitorRate: 4000, myRate: 7000 },
-        { day: "Day -11", competitorRate: 4100, myRate: 7000 },
-        { day: "Day -9", competitorRate: 4200, myRate: 7100 },
-        { day: "Day -7", competitorRate: 4300, myRate: 7100 },
-        { day: "Day -5", competitorRate: 4400, myRate: 7200 },
-        { day: "Day -3", competitorRate: 4500, myRate: 7200 },
-        { day: "Day -1", competitorRate: 4300, myRate: 7200 },
-        { day: "Today", competitorRate: 4200, myRate: 7200 },
-      ],
     },
   ];
 
   return NextResponse.json({
-    hotelId: parseInt(hotelId, 10),
     dates,
     myHotel,
     competitors,
-    channels: ["MakeMyTrip", "Agoda", "Booking.com", "EaseMyTrip", "ClearTrip"],
-    timestamp: new Date().toISOString(),
+    hotelId,
+    roomType,
   });
 }

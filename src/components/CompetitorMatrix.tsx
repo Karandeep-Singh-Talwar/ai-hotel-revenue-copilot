@@ -29,16 +29,24 @@ interface CompetitorMatrixProps {
   onBack?: () => void;
 }
 
-const INDIAN_COMPETITOR_NAMES = [
-  "The Imperial",
-  "The Lodhi",
-  "The Oberoi",
-  "Taj Mansingh",
-  "Bloomrooms",
+const AEROCITY_COMPETITOR_NAMES = [
+  "Aloft Aerocity",
+  "Holiday Inn Aerocity",
+  "Novotel Aerocity",
+  "Pullman Aerocity",
+  "Ibis Aerocity",
+];
+
+const ROOM_CATEGORIES = [
+  { id: "superior", name: "Superior Room", basePrice: 5800, multiplier: 1.0 },
+  { id: "deluxe", name: "Deluxe Room", basePrice: 6900, multiplier: 1.19 },
+  { id: "executive", name: "Executive Room", basePrice: 8500, multiplier: 1.47 },
+  { id: "suite", name: "Executive Suite", basePrice: 12500, multiplier: 2.15 },
 ];
 
 export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMatrixProps) {
   const [selectedOta, setSelectedOta] = useState<string>("MakeMyTrip");
+  const [selectedRoomCategory, setSelectedRoomCategory] = useState<string>("superior");
   const [matrixData, setMatrixData] = useState<CompetitorRateCell[]>([]);
   const [selectedCell, setSelectedCell] = useState<{
     date: string;
@@ -52,39 +60,41 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
   const [isMatchingRate, setIsMatchingRate] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
+  const currentCategory =
+    ROOM_CATEGORIES.find((r) => r.id === selectedRoomCategory) || ROOM_CATEGORIES[0];
+
   useEffect(() => {
     fetchMatrixData();
-  }, [selectedOta]);
+  }, [selectedOta, selectedRoomCategory]);
 
   const fetchMatrixData = async () => {
     try {
-      const res = await fetch("/api/rates/matrix?hotelId=1");
+      const res = await fetch(`/api/rates/matrix?hotelId=1&roomType=${selectedRoomCategory}`);
       const json = await res.json();
 
       if (json?.dates && json?.myHotel && json?.competitors) {
         const rows: CompetitorRateCell[] = json.dates.map((d: string) => {
           const dateObj = new Date(d);
           const dayOfWeek = dateObj.getDay();
-          const isWeekend = dayOfWeek === 5 || dayOfWeek === 6; // Fri or Sat
-          const myRate = json.myHotel.ratesByDate[d] || (isWeekend ? 8100 : 7200);
+          const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
+          const myRate = json.myHotel.ratesByDate[d] || (isWeekend ? Math.round(currentCategory.basePrice * 1.15) : currentCategory.basePrice);
 
           const competitorsMap: { [key: string]: { rate: number; delta: number; isUndercut: boolean } } = {};
 
           json.competitors.forEach((c: any) => {
-            // Get channel rate or fallback
             const ch = c.channels[selectedOta] || c.channels["MakeMyTrip"] || c.channels["Agoda"];
-            let baseRate = ch ? ch.rate : 9500;
+            let baseRate = ch ? ch.rate : 8400;
             if (isWeekend) baseRate = Math.round(baseRate * 1.12);
 
-            const shortName = c.name.includes("Imperial")
-              ? "The Imperial"
-              : c.name.includes("Lodhi")
-              ? "The Lodhi"
-              : c.name.includes("Oberoi")
-              ? "The Oberoi"
-              : c.name.includes("Taj")
-              ? "Taj Mansingh"
-              : "Bloomrooms";
+            const shortName = c.name.includes("Aloft")
+              ? "Aloft Aerocity"
+              : c.name.includes("Holiday")
+              ? "Holiday Inn Aerocity"
+              : c.name.includes("Novotel")
+              ? "Novotel Aerocity"
+              : c.name.includes("Pullman")
+              ? "Pullman Aerocity"
+              : "Ibis Aerocity";
 
             const delta = baseRate - myRate;
             competitorsMap[shortName] = {
@@ -114,10 +124,10 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
           const firstRow = rows[0];
           setSelectedCell({
             date: firstRow.date,
-            competitor: "The Imperial",
-            theirRate: firstRow.competitors["The Imperial"]?.rate || 9950,
+            competitor: "Aloft Aerocity",
+            theirRate: firstRow.competitors["Aloft Aerocity"]?.rate || 8400,
             myRate: firstRow.myRate,
-            delta: (firstRow.competitors["The Imperial"]?.rate || 9950) - firstRow.myRate,
+            delta: (firstRow.competitors["Aloft Aerocity"]?.rate || 8400) - firstRow.myRate,
           });
         }
       }
@@ -142,7 +152,6 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
       });
       const result = await res.json();
       if (result.success) {
-        // Update local matrix state
         setMatrixData((prev) =>
           prev.map((row) => {
             if (row.date === selectedCell.date) {
@@ -157,7 +166,7 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
         setSelectedCell((prev) => (prev ? { ...prev, myRate: selectedCell.theirRate, delta: 0 } : null));
         if (onRateUpdated) {
           onRateUpdated(
-            `Matched ${selectedCell.competitor} for ${selectedCell.date} at ₹${selectedCell.theirRate.toLocaleString("en-IN")} across OTAs.`
+            `Matched ${selectedCell.competitor} on ${selectedCell.date} at ₹${selectedCell.theirRate.toLocaleString("en-IN")} for ${currentCategory.name}. Updated on all OTAs!`
           );
         }
       }
@@ -173,84 +182,80 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
     await fetchMatrixData();
     setIsSyncing(false);
     if (onRateUpdated) {
-      onRateUpdated(`Synced live rate observations from Neon Database across ${selectedOta}.`);
+      onRateUpdated(`Checked live Aerocity prices from ${selectedOta}. All rates are up to date.`);
     }
   };
 
   const handleExportCsv = () => {
     const csvContent =
-      "Date,The Claridges (My Hotel)," +
-      INDIAN_COMPETITOR_NAMES.join(",") +
+      `Date,Lemon Tree Aerocity (${currentCategory.name}),` +
+      AEROCITY_COMPETITOR_NAMES.join(",") +
       "\n" +
       matrixData
         .map(
           (row) =>
             `${row.date},${row.myRate},` +
-            INDIAN_COMPETITOR_NAMES.map((c) => row.competitors[c]?.rate || "").join(",")
+            AEROCITY_COMPETITOR_NAMES.map((c) => row.competitors[c]?.rate || "").join(",")
         )
         .join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `delhi_competitor_matrix_${selectedOta.toLowerCase()}.csv`);
+    link.setAttribute("download", `aerocity_${selectedRoomCategory}_prices_${selectedOta.toLowerCase()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // 14-day history for selected cell
   const historyData = [
-    { day: "D-13", rate: selectedCell ? Math.round(selectedCell.theirRate * 0.94) : 9200, undercut: false },
-    { day: "D-11", rate: selectedCell ? Math.round(selectedCell.theirRate * 0.96) : 9350, undercut: false },
-    { day: "D-9", rate: selectedCell ? Math.round(selectedCell.theirRate * 0.95) : 9100, undercut: false },
-    { day: "D-7", rate: selectedCell ? Math.round(selectedCell.theirRate * 0.98) : 9600, undercut: false },
-    { day: "D-5", rate: selectedCell ? Math.round(selectedCell.theirRate * 1.01) : 9900, undercut: false },
-    { day: "D-3", rate: selectedCell ? Math.round(selectedCell.theirRate * 1.03) : 10100, undercut: false },
-    { day: "D-1", rate: selectedCell ? selectedCell.theirRate : 9950, undercut: selectedCell ? selectedCell.delta < 0 : false },
+    { day: "14d ago", rate: selectedCell ? Math.round(selectedCell.theirRate * 0.94) : 8000, undercut: false },
+    { day: "11d ago", rate: selectedCell ? Math.round(selectedCell.theirRate * 0.96) : 8150, undercut: false },
+    { day: "8d ago", rate: selectedCell ? Math.round(selectedCell.theirRate * 0.95) : 8100, undercut: false },
+    { day: "6d ago", rate: selectedCell ? Math.round(selectedCell.theirRate * 0.98) : 8300, undercut: false },
+    { day: "4d ago", rate: selectedCell ? Math.round(selectedCell.theirRate * 1.01) : 8400, undercut: false },
+    { day: "2d ago", rate: selectedCell ? Math.round(selectedCell.theirRate * 1.03) : 8500, undercut: false },
+    { day: "Today", rate: selectedCell ? selectedCell.theirRate : 8400, undercut: selectedCell ? selectedCell.delta < 0 : false },
   ];
 
   return (
     <div className="flex flex-col flex-1 h-full overflow-hidden bg-background-dark font-body antialiased">
-      {/* Minimal Header (Back-to-Main Exception matching Google Stitch) */}
+      {/* Top Header */}
       <header className="flex items-center justify-between border-b border-[#293837] px-6 py-3 bg-[#111817] shrink-0">
         <div className="flex items-center gap-4 text-white">
           <button
             onClick={onBack}
-            className="flex items-center justify-center size-8 rounded-full hover:bg-white/10 transition-colors"
+            className="flex items-center justify-center size-8 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+            title="Back to Price Recommendations"
           >
             <span className="material-symbols-outlined text-[20px]">arrow_back</span>
           </button>
-          <div className="flex items-center gap-2">
-            <div className="size-4 text-primary">
-              <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M44 11.2727C44 14.0109 39.8386 16.3957 33.69 17.6364C39.8386 18.877 44 21.2618 44 24C44 26.7382 39.8386 29.123 33.69 30.3636C39.8386 31.6043 44 33.9891 44 36.7273C44 40.7439 35.0457 44 24 44C12.9543 44 4 40.7439 4 36.7273C4 33.9891 8.16144 31.6043 14.31 30.3636C8.16144 29.123 4 26.7382 4 24C4 21.2618 8.16144 18.877 14.31 17.6364C8.16144 16.3957 4 14.0109 4 11.2727C4 7.25611 12.9543 4 24 4C35.0457 4 44 7.25611 44 11.2727Z"
-                  fill="currentColor"
-                />
-              </svg>
-            </div>
-            <h1 className="text-lg font-bold leading-tight font-heading">Competitor Matrix</h1>
-            <span className="text-xs text-muted font-mono ml-2">The Claridges New Delhi</span>
+          <div>
+            <h1 className="text-base font-bold leading-tight font-heading">
+              Aerocity Hotel Price Comparison
+            </h1>
+            <p className="text-xs text-muted font-mono">
+              Lemon Tree Premier, Delhi Airport (Aerocity) • Comparing next 14 days
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
             onClick={handleSyncRates}
             disabled={isSyncing}
-            className="flex items-center justify-center h-8 px-4 bg-primary/10 text-primary border border-primary/20 rounded text-sm font-medium hover:bg-primary/20 transition-colors disabled:opacity-50"
+            className="flex items-center justify-center h-8 px-4 bg-primary/10 text-primary border border-primary/20 rounded text-xs font-medium hover:bg-primary/20 transition-colors disabled:opacity-50 cursor-pointer font-mono"
           >
-            <span className={`material-symbols-outlined mr-2 text-[18px] ${isSyncing ? "animate-spin" : ""}`}>
+            <span className={`material-symbols-outlined mr-1.5 text-[16px] ${isSyncing ? "animate-spin" : ""}`}>
               sync
             </span>
-            {isSyncing ? "Syncing..." : "Sync Rates"}
+            {isSyncing ? "Checking Prices..." : "Check Live Prices"}
           </button>
           <button
             onClick={handleExportCsv}
-            className="flex items-center justify-center h-8 px-4 bg-[#293837] text-white rounded text-sm font-medium hover:bg-[#3A506B] transition-colors"
+            className="flex items-center justify-center h-8 px-4 bg-[#293837] text-white rounded text-xs font-medium hover:bg-[#3A506B] transition-colors cursor-pointer font-mono"
           >
-            Export CSV
+            Download Spreadsheet
           </button>
         </div>
       </header>
@@ -259,38 +264,74 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
       <main className="flex flex-1 overflow-hidden">
         {/* Left Section: Matrix */}
         <div className="flex-1 flex flex-col min-w-0 bg-matrix-bg relative">
-          {/* Toolbar */}
-          <div className="flex items-center justify-between p-4 border-b border-[#3A506B] bg-matrix-surface shrink-0">
-            {/* OTA Filters */}
-            <div className="flex h-8 bg-matrix-bg rounded p-1 w-fit border border-[#3A506B]">
-              {["MakeMyTrip", "Agoda", "Booking.com", "EaseMyTrip", "ClearTrip"].map((ota) => (
-                <button
-                  key={ota}
-                  onClick={() => setSelectedOta(ota)}
-                  className={`flex cursor-pointer items-center justify-center rounded px-3 text-sm font-medium transition-colors ${
-                    selectedOta === ota
-                      ? "bg-matrix-surface text-primary shadow-sm font-bold"
-                      : "text-matrix-muted hover:text-white"
-                  }`}
-                >
-                  {ota}
-                </button>
-              ))}
+          {/* Room Categories Selector Row */}
+          <div className="px-4 py-2.5 bg-[#141b33] border-b border-[#3A506B] flex items-center justify-between gap-4 overflow-x-auto">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted font-mono uppercase font-bold flex items-center gap-1">
+                <span className="material-symbols-outlined text-primary text-[16px]">bedroom_parent</span>
+                Room Type:
+              </span>
+              <div className="flex gap-1.5">
+                {ROOM_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedRoomCategory(cat.id)}
+                    className={`px-3 py-1 text-xs font-mono rounded transition-colors cursor-pointer flex items-center gap-1.5 ${
+                      selectedRoomCategory === cat.id
+                        ? "bg-primary text-[#0B132B] font-bold shadow-sm"
+                        : "bg-surface text-muted hover:text-white border border-[#3A506B]"
+                    }`}
+                  >
+                    <span>{cat.name}</span>
+                    <span className="opacity-80 text-[10px]">
+                      (₹{cat.basePrice.toLocaleString("en-IN")})
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
 
+            <div className="hidden lg:flex items-center gap-3 text-xs font-mono text-muted">
+              <span>Viewing: <strong className="text-white">{currentCategory.name}</strong></span>
+            </div>
+          </div>
+
+          {/* Toolbar: OTAs & Legend */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-b border-[#3A506B] bg-matrix-surface shrink-0 gap-3">
+            {/* Booking Site Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted font-mono hidden md:inline">Booking Site:</span>
+              <div className="flex h-8 bg-matrix-bg rounded p-1 w-fit border border-[#3A506B]">
+                {["MakeMyTrip", "Agoda", "Booking.com", "EaseMyTrip", "ClearTrip"].map((ota) => (
+                  <button
+                    key={ota}
+                    onClick={() => setSelectedOta(ota)}
+                    className={`flex cursor-pointer items-center justify-center rounded px-3 text-xs font-medium transition-colors ${
+                      selectedOta === ota
+                        ? "bg-matrix-surface text-primary shadow-sm font-bold"
+                        : "text-matrix-muted hover:text-white"
+                    }`}
+                  >
+                    {ota}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Simple Legend */}
             <div className="flex items-center gap-4 text-xs font-mono text-matrix-muted">
               <span className="flex items-center gap-1.5">
-                <div className="size-2 rounded-full bg-matrix-accent"></div>
-                Undercutting
+                <div className="size-2.5 rounded-full bg-matrix-accent"></div>
+                Cheaper Than You
               </span>
               <span className="flex items-center gap-1.5">
-                <div className="size-2 rounded-full bg-primary"></div>
-                Higher Rate
+                <div className="size-2.5 rounded-full bg-primary"></div>
+                Higher Than You
               </span>
             </div>
           </div>
 
-          {/* Matrix Table Container */}
+          {/* Matrix Table */}
           <div className="flex-1 overflow-auto bg-matrix-bg">
             <table className="matrix-table w-full text-left font-mono text-[12px] whitespace-nowrap">
               <thead className="sticky top-0 z-40 shadow-md">
@@ -298,13 +339,13 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
                   <th className="p-3 font-semibold text-matrix-muted min-w-[100px] border-b-2 border-b-[#3A506B] bg-[#1C2541] sticky left-0 z-30">
                     Date
                   </th>
-                  <th className="p-3 font-semibold text-white bg-matrix-hover min-w-[130px] border-b-2 border-b-primary shadow-[4px_0_12px_rgba(0,0,0,0.5)] sticky left-[100px] z-30">
-                    The Claridges (You)
+                  <th className="p-3 font-semibold text-white bg-matrix-hover min-w-[180px] border-b-2 border-b-primary shadow-[4px_0_12px_rgba(0,0,0,0.5)] sticky left-[100px] z-30">
+                    Lemon Tree ({currentCategory.name})
                   </th>
-                  {INDIAN_COMPETITOR_NAMES.map((name) => (
+                  {AEROCITY_COMPETITOR_NAMES.map((name) => (
                     <th
                       key={name}
-                      className="p-3 font-semibold text-matrix-muted min-w-[125px] border-b-2 border-b-[#3A506B] bg-[#1C2541]"
+                      className="p-3 font-semibold text-matrix-muted min-w-[135px] border-b-2 border-b-[#3A506B] bg-[#1C2541]"
                     >
                       {name}
                     </th>
@@ -314,9 +355,9 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
               <tbody className="text-white">
                 {matrixData.map((row) => (
                   <tr key={row.date} className="transition-colors duration-75 hover:bg-[#2A375C]">
-                    <td className="p-3 text-matrix-muted bg-[#1C2541] sticky left-0 z-20">
+                    <td className="p-3 text-matrix-muted bg-[#1C2541] sticky left-0 z-20 font-bold">
                       {row.date}
-                      {row.isWeekend && <span className="text-[#FF9F1C] ml-1 font-bold">*</span>}
+                      {row.isWeekend && <span className="text-[#FF9F1C] ml-1 font-bold" title="Weekend Rate">*</span>}
                     </td>
                     <td
                       className={`p-3 bg-[#1C2541] font-bold shadow-[4px_0_12px_rgba(0,0,0,0.3)] text-[14px] sticky left-[100px] z-20 ${
@@ -325,7 +366,7 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
                     >
                       ₹{row.myRate.toLocaleString("en-IN")}
                     </td>
-                    {INDIAN_COMPETITOR_NAMES.map((compName) => {
+                    {AEROCITY_COMPETITOR_NAMES.map((compName) => {
                       const compData = row.competitors[compName];
                       if (!compData) {
                         return (
@@ -354,7 +395,7 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
                           } ${isSelected ? "ring-2 ring-primary ring-inset" : ""}`}
                         >
                           <div className="flex flex-col items-center justify-center h-full">
-                            <span className="text-[14px] font-bold">
+                            <span className="text-[13px] font-bold">
                               ₹{compData.rate.toLocaleString("en-IN")}
                             </span>
                             <span
@@ -370,7 +411,7 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
                                 ? `[-₹${Math.abs(compData.delta).toLocaleString("en-IN")}]`
                                 : compData.delta > 0
                                 ? `[+₹${Math.abs(compData.delta).toLocaleString("en-IN")}]`
-                                : "[ ₹00]"}
+                                : "[ Same ]"}
                             </span>
                           </div>
                         </td>
@@ -383,31 +424,35 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
           </div>
         </div>
 
-        {/* Right Side Panel: Price History & Cell Details */}
+        {/* Right Side Panel: Price Comparison Drawer */}
         {selectedCell && (
           <aside className="w-80 bg-matrix-surface border-l border-[#3A506B] flex flex-col shrink-0">
             <div className="p-4 border-b border-[#3A506B] flex justify-between items-start">
               <div>
                 <h3 className="text-xs text-matrix-muted uppercase tracking-wider font-semibold mb-1">
-                  Cell Details
+                  Selected Price Details
                 </h3>
-                <p className="font-mono text-white text-sm font-bold">
-                  {selectedCell.date} • {selectedCell.competitor}
+                <p className="font-heading text-white text-base font-bold">
+                  {selectedCell.competitor}
                 </p>
-                <p className="text-xs text-primary mt-1 font-mono font-bold">{selectedOta}</p>
+                <p className="text-xs text-primary mt-0.5 font-mono font-bold">
+                  {selectedCell.date} • {currentCategory.name}
+                </p>
+                <p className="text-[11px] text-muted font-mono mt-0.5">Found on {selectedOta}</p>
               </div>
               <button
                 onClick={() => setSelectedCell(null)}
-                className="text-matrix-muted hover:text-white"
+                className="text-matrix-muted hover:text-white cursor-pointer"
+                title="Close"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
             <div className="p-4 flex flex-col gap-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="bg-matrix-bg p-3 rounded border border-[#3A506B]">
-                  <p className="text-xs text-matrix-muted mb-1 font-mono">Their Rate</p>
+                  <p className="text-xs text-matrix-muted mb-1 font-mono">Their Price</p>
                   <p
                     className={`font-mono text-lg font-bold ${
                       selectedCell.delta < 0 ? "text-matrix-accent" : "text-primary"
@@ -417,18 +462,31 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
                   </p>
                 </div>
                 <div className="bg-matrix-bg p-3 rounded border border-[#3A506B]">
-                  <p className="text-xs text-matrix-muted mb-1 font-mono">My Rate</p>
+                  <p className="text-xs text-matrix-muted mb-1 font-mono">Your Price</p>
                   <p className="font-mono text-lg font-bold text-white">
                     ₹{selectedCell.myRate.toLocaleString("en-IN")}
                   </p>
                 </div>
               </div>
 
+              {selectedCell.delta !== 0 && (
+                <div
+                  className={`p-2.5 rounded text-xs font-mono ${
+                    selectedCell.delta < 0
+                      ? "bg-rose-500/10 border border-rose-500/30 text-rose-300"
+                      : "bg-teal-500/10 border border-teal-500/30 text-teal-300"
+                  }`}
+                >
+                  {selectedCell.delta < 0
+                    ? `They are ₹${Math.abs(selectedCell.delta).toLocaleString("en-IN")} cheaper than your price.`
+                    : `They are ₹${Math.abs(selectedCell.delta).toLocaleString("en-IN")} higher than your price.`}
+                </div>
+              )}
+
               <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-matrix-muted mb-3 font-mono">
-                  14-Day Price History
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-matrix-muted mb-2 font-mono">
+                  14-Day Price Trend
                 </h4>
-                {/* Recharts High-contrast chart */}
                 <div className="h-32 bg-matrix-bg border border-[#3A506B] rounded p-2">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={historyData}>
@@ -440,6 +498,7 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
                           borderColor: "#3A506B",
                           fontSize: "11px",
                           fontFamily: "JetBrains Mono",
+                          color: "#FFFFFF",
                         }}
                       />
                       <Bar dataKey="rate" radius={[2, 2, 0, 0]}>
@@ -459,9 +518,11 @@ export default function CompetitorMatrix({ onRateUpdated, onBack }: CompetitorMa
               <button
                 onClick={handleMatchRate}
                 disabled={isMatchingRate || selectedCell.theirRate === selectedCell.myRate}
-                className="w-full py-2.5 bg-primary hover:bg-[#15bfae] text-[#0B132B] rounded text-sm font-mono font-bold transition-all shadow-[0_0_12px_rgba(24,216,197,0.3)] disabled:opacity-40 disabled:bg-matrix-hover disabled:text-white"
+                className="w-full py-2.5 bg-primary hover:bg-[#15bfae] text-[#0B132B] rounded text-xs font-mono font-bold transition-all shadow-[0_0_12px_rgba(24,216,197,0.3)] disabled:opacity-40 disabled:bg-matrix-hover disabled:text-white cursor-pointer uppercase"
               >
-                {isMatchingRate ? "Syncing with eZee Centrix..." : "Match Competitor Rate"}
+                {isMatchingRate
+                  ? "Updating Booking Sites..."
+                  : `Match This Price (₹${selectedCell.theirRate.toLocaleString("en-IN")})`}
               </button>
             </div>
           </aside>
